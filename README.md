@@ -51,9 +51,9 @@ OfferCopilot 是一个基于 **FastAPI + SQLite** 的单机 Web 应用，数据�
 
 ## 🚀 快速开始
 
-### 方式一：Windows 一键启动
-1. 安装 Python 3.10+
-2. 双击 `start.bat`
+### 方式一：Windows 一键启动（推荐）
+1. 安装 [Python 3.10+](https://www.python.org/downloads/)（安装时勾选 **Add python.exe to PATH**）
+2. 双击 `start.bat`（首次运行会自动安装依赖并打开浏览器）
 3. 浏览器打开 <http://127.0.0.1:8500>
 
 ### 方式二：手动启动
