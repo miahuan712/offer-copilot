@@ -1,0 +1,2896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>秋招工作台</title>
+<style>
+:root{--blue:#3370ff;--bg:#f2f3f5;--line:#e5e6eb;--text:#1f2329;--sub:#646a73}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;font:14px/1.6 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:28px;padding:0 24px;height:52px;background:#fff;border-bottom:1px solid var(--line);flex:none}
+.brand{font-size:16px;font-weight:600}
+.tabs{display:flex;height:100%}
+.tab{border:none;background:none;padding:0 16px;font-size:14px;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;height:100%}
+.tab.active{color:var(--blue);font-weight:600;border-bottom-color:var(--blue)}
+.count{background:#eef1f6;border-radius:8px;padding:0 6px;font-size:12px;color:var(--sub);margin-left:4px}
+.view{flex:1;display:flex;flex-direction:column;min-height:0}
+#view-chat{max-width:880px;margin:0 auto;width:100%}
+.msg-list{flex:1;overflow-y:auto;padding:24px 20px 8px}
+.msg{display:flex;margin-bottom:16px}
+.msg.user{justify-content:flex-end}
+.bubble{max-width:80%;padding:10px 14px;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);white-space:pre-wrap;word-break:break-word}
+.msg.user .bubble{background:var(--blue);color:#fff;border-top-right-radius:4px}
+.msg.bot .bubble{border-top-left-radius:4px}
+.jdtext{max-height:100px;overflow:hidden}
+.jdtext.open{max-height:none}
+.tgllink{font-size:12px;opacity:.85;margin-top:4px;cursor:pointer;user-select:none}
+.composer{display:flex;gap:12px;padding:12px 20px 24px}
+.composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:#fff;outline:none;min-height:64px;max-height:200px}
+.composer textarea:focus{border-color:var(--blue)}
+button.primary{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:0 22px;font-size:14px;cursor:pointer;flex:none}
+button.ghost{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 14px;cursor:pointer;font:inherit;color:var(--text)}
+.card{min-width:320px}
+.card h4{margin:0 0 10px;font-size:13px;color:var(--sub);font-weight:500}
+.frow{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.frow label{width:56px;color:var(--sub);font-size:13px;flex:none;padding-top:6px}
+.frow input,.frow textarea{flex:1;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;outline:none;min-width:0}
+.frow input:focus,.frow textarea:focus{border-color:var(--blue)}
+.frow textarea{resize:vertical;min-height:64px}
+.card-actions{display:flex;gap:10px;margin-top:12px;align-items:center}
+.badge-ok{color:#2ea64f;font-weight:600}
+.toolbar{display:flex;justify-content:space-between;align-items:center;padding:14px 24px 0;gap:12px;flex-wrap:wrap;flex:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid transparent;background:#fff;border-radius:14px;padding:3px 12px;font-size:12px;color:var(--sub);cursor:pointer}
+.chip.active{border-color:var(--blue);color:var(--blue);font-weight:600}
+.table-wrap{flex:1;overflow:auto;margin:12px 24px 24px;background:#fff;border-radius:12px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{position:sticky;top:0;background:#f7f8fa;color:var(--sub);font-weight:500;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
+td{padding:8px 12px;border-bottom:1px solid #f0f1f3;vertical-align:middle}
+tr:hover td{background:#f9fbff}
+.ce{min-width:80px}
+[contenteditable]:focus{outline:1.5px solid var(--blue);border-radius:4px;background:#fff}
+select.stage{border:none;border-radius:9px;padding:3px 6px;font-size:12px;font-weight:600;cursor:pointer;appearance:none;-webkit-appearance:none;text-align:center;outline:none}
+.dt{border:none;background:transparent;font:inherit;outline:none;cursor:pointer;width:132px;color:var(--text)}
+.d-urgent{color:#e5484d;font-weight:600}
+.d-over{color:#8f959e;opacity:.7}
+.reqcell{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--sub)}
+.del{border:none;background:none;cursor:pointer;font-size:14px;opacity:.55}
+.del:hover{opacity:1}
+.tailor{border:none;background:none;cursor:pointer;font-size:14px;opacity:.55}
+.tailor:hover{opacity:1}
+.mat-tab{padding:6px 16px;border-radius:8px;cursor:pointer;font:inherit;border:1px solid var(--line);background:#fff;color:var(--text)}
+.mat-tab.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chat-toolbar{display:flex;align-items:center;gap:8px;padding:10px 20px 0;flex:none}
+.jf-side{width:210px;flex:none;border-right:1px solid var(--line);padding:14px;overflow-y:auto;background:#fff}
+.jf-item{padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.jf-item.on{background:var(--blue);color:#fff}
+.jf-item .cnt{font-size:11px;opacity:.7}
+.jf-item .rdel{font-size:11px;opacity:.8}
+.jg-main{flex:1;display:flex;flex-direction:column;min-height:0;padding:14px 18px;overflow-y:auto}
+.jg-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex:none}
+.iv-video{display:flex;gap:10px;padding:10px 20px 0;flex:none}
+.iv-cam{flex:1;position:relative;border-radius:10px;overflow:hidden;background:#1f2329;height:130px;min-width:0}
+.iv-cam img,.iv-cam video{width:100%;height:100%;object-fit:cover;display:block}
+.iv-cam .off{display:flex;align-items:center;justify-content:center;height:100%;color:#8f959e;font-size:12px}
+.iv-cam-label{position:absolute;bottom:6px;left:10px;color:#fff;font-size:11px;background:rgba(0,0,0,.45);border-radius:6px;padding:1px 8px}
+.iv-cam-dot{position:absolute;top:8px;right:10px;width:8px;height:8px;border-radius:50%;background:#e5484d;box-shadow:0 0 6px #e5484d}
+.av-wrap{display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.av-preview{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#eef1f6;flex:none}
+.ustable{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+.ustable th{text-align:left;padding:4px 6px;color:var(--sub);font-weight:500;border-bottom:1px solid var(--line)}
+.ustable td{padding:4px 6px;border-bottom:1px solid #f0f1f3}
+.empty{padding:60px 0;text-align:center;color:var(--sub)}
+.empty span{font-size:12px;color:#8f959e}
+.match-badge{border:none;border-radius:8px;padding:2px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.m-hi{background:#e8f7ee;color:#2ea64f}
+.m-mid{background:#fdf0e0;color:#d97a00}
+.m-lo{background:#f2f3f5;color:#8f959e}
+.m-none{background:#f2f3f5;color:#8f959e}
+.m-run{background:#eaf0ff;color:#3370ff}
+.bar{height:8px;border-radius:4px;background:#f0f1f3;overflow:hidden;flex:1}
+.bar i{display:block;height:100%;border-radius:4px}
+.dimrow{display:flex;align-items:center;gap:10px;margin:6px 0}
+.dimrow label{width:64px;font-size:12px;color:var(--sub);flex:none}
+.dimrow .num{width:34px;font-size:12px;color:var(--sub);text-align:right;flex:none}
+.mlist{margin:0;padding-left:0;list-style:none;font-size:13px}
+.mlist li{margin:4px 0;padding-left:22px;position:relative;line-height:1.5}
+.mlist li::before{position:absolute;left:2px}
+.mlist.ok li::before{content:"✓";color:#2ea64f}
+.mlist.gap li::before{content:"⚠";color:#d97a00}
+.mlist.tip li::before{content:"›";color:#3370ff;font-weight:700}
+.mlist li.plain::before{content:none}
+.sev{display:inline-block;border-radius:6px;padding:0 6px;font-size:11px;margin-right:6px;vertical-align:1px}
+.sev-hi{background:#fdecec;color:#e5484d}
+.sev-mid{background:#fdf0e0;color:#d97a00}
+.sev-lo{background:#f2f3f5;color:#8f959e}
+.rrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+.rrow .rn{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rtag{background:#eaf0ff;color:#3370ff;font-size:11px;border-radius:6px;padding:1px 8px;flex:none}
+.rlink{color:var(--blue);cursor:pointer;font-size:12px;flex:none}
+.rdel{color:#e5484d;cursor:pointer;font-size:12px;flex:none}
+.iv-setup{flex:1;overflow-y:auto;padding:24px;max-width:760px;margin:0 auto;width:100%}
+.iv-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
+.iv-card h3{margin:0 0 6px}
+.iv-card p{margin:0 0 14px;color:var(--sub);font-size:13px}
+.iv-card select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;margin-bottom:12px;outline:none;background:#fff}
+.iv-topbar{display:flex;gap:10px;align-items:center;padding:12px 24px 0;flex:none}
+.iv-topbar b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qitem{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0}
+.qtext{font-size:13px;color:var(--sub)}
+.qfb{font-size:13px;margin-top:4px;line-height:1.5}
+.verdict{display:inline-block;border-radius:6px;padding:0 8px;font-size:11px;font-weight:600;margin-right:6px}
+.v-good{background:#e8f7ee;color:#2ea64f}
+.v-mid{background:#fdf0e0;color:#d97a00}
+.v-bad{background:#fdecec;color:#e5484d}
+.evlab{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+.inp{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit;outline:none;background:#fff}
+.inp:focus{border-color:var(--blue)}
+select.inp{height:36px}
+.ev-result{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.evbar{display:flex;align-items:center;gap:10px;margin:5px 0}
+.evbar label{width:56px;font-size:12px;color:var(--sub);flex:none}
+.evbar .num{width:52px;font-size:12px;color:var(--sub);text-align:right;flex:none}
+.evrow{display:flex;gap:6px;align-items:center;border-top:1px solid #f0f1f3;padding:6px 0;font-size:12px}
+.evrow .jd{flex:1;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evdot{width:14px;text-align:center;flex:none}
+.okdot{color:#2ea64f}
+.baddot{color:#e5484d}
+.evcase{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.evcase .cn{flex:1;min-width:0}
+.evcase .cm{font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modal{position:fixed;inset:0;background:rgba(31,35,41,.45);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal-box{width:min(680px,92vw);max-height:80vh;background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
+#mClose{border:none;background:none;cursor:pointer;font-size:14px;color:var(--sub)}
+.modal-body{padding:16px 20px;overflow-y:auto}
+.modal-body h4{margin:10px 0 6px;font-size:13px;color:var(--sub);font-weight:500}
+.reqbox{white-space:pre-wrap;background:#f7f8fa;border-radius:8px;padding:12px}
+.jdpre{white-space:pre-wrap;font:inherit;color:var(--sub);max-height:280px;overflow:auto;background:#f7f8fa;border-radius:8px;padding:12px}
+.table-layout{display:flex;gap:14px;flex:1;min-height:0}
+.table-layout .table-wrap{flex:1;min-width:0}
+.exp-side{width:288px;flex:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;overflow-y:auto}
+.exp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.exp-head b{font-size:14px}
+.exp-form{background:#f7f8fa;border-radius:8px;padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.exp-form input,.exp-form select,.exp-form textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 9px;font:inherit;outline:none;box-sizing:border-box}
+.exp-form textarea{min-height:70px;resize:vertical}
+.exp-item{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:13px}
+.exp-item .et{font-weight:600}
+.exp-item .es{font-size:12px;color:var(--sub);margin-top:2px}
+.exp-item .ea{margin-top:6px;display:flex;gap:10px;font-size:12px}
+.exp-item .ea .ed{cursor:pointer;color:#8f959e}
+.exp-item .ea .del{cursor:pointer;color:#e5484d}
+.exp-badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;background:#eef4ff;color:var(--blue);margin-right:6px}
+.exp-empty{color:#8f959e;font-size:12px;text-align:center;padding:14px 0}
+.rw-cand{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.rw-cand input{margin-top:3px}
+.rw-cand .rc-main{flex:1;min-width:0}
+.rw-cand .rc-t{font-weight:600}
+.rw-cand .rc-s{font-size:12px;color:var(--sub);margin-top:2px}
+.rw-cand .rc-r{font-size:12px;color:#8f959e;margin-top:2px}
+.rw-score{flex:none;font-size:12px;color:var(--sub);white-space:nowrap;margin-top:2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🎯 OfferCopilot</div>
+  <div class="tabs">
+    <button class="tab active" data-view="chat">💬 对话</button>
+    <button class="tab" data-view="table">📋 表格<span class="count" id="tableCount">0</span></button>
+    <button class="tab" data-view="iv">🎤 面试</button>
+    <button class="tab" data-view="jings">📚 面经库</button>
+    <button class="tab" data-view="daily">📮 日报</button>
+    <button class="tab" data-view="monitor">🩺 运行</button>
+    <button class="tab" data-view="settings">⚙️ 设置</button>
+  </div>
+</header>
+
+<section id="view-chat" class="view">
+  <div class="chat-toolbar">
+    <span style="font-size:12px;color:var(--sub);flex:none">模型</span>
+    <select id="chatModel" class="inp" style="width:auto;min-width:240px"></select>
+    <span id="chatModelStatus" style="font-size:12px;color:var(--sub)"></span>
+  </div>
+  <div class="msg-list" id="msgList"></div>
+  <div class="composer">
+    <textarea id="jdInput" placeholder="粘贴岗位 JD 全文…（Enter 发送，Shift+Enter 换行）"></textarea>
+    <button class="primary" id="sendBtn">解析 JD</button>
+  </div>
+</section>
+
+<section id="view-table" class="view" hidden>
+  <div class="toolbar">
+    <div class="chips" id="chips"></div>
+    <div style="display:flex;gap:8px">
+      <button class="ghost" id="expToggle" title="实习/项目经历库（JD 改写用）">📁 经历库</button>
+      <button class="ghost" id="resumeBtn">📄 简历</button>
+      <button class="ghost" id="matchAllBtn">⚡ 一键匹配</button>
+      <button class="ghost" id="addBtn">＋ 手动添加</button>
+    </div>
+  </div>
+  <div class="table-layout">
+    <aside class="exp-side" id="expSide" hidden>
+      <div class="exp-head"><b>📁 经历库</b><button class="ghost" id="expAdd" style="padding:3px 10px;font-size:12px">＋ 新增</button></div>
+      <div class="exp-form" id="expForm" hidden>
+        <select id="exType"><option>实习</option><option>项目</option></select>
+        <input id="exCompany" placeholder="公司/组织">
+        <input id="exTitle" placeholder="岗位/项目名称">
+        <input id="exRole" placeholder="角色（如：负责人）">
+        <input id="exTime" placeholder="时间（如 2024.06-2024.09）">
+        <textarea id="exContent" placeholder="素材要点：做了什么、量化结果…"></textarea>
+        <div style="display:flex;gap:8px">
+          <button class="primary" id="exSave" style="flex:1;padding:5px">保存</button>
+          <button class="ghost" id="exCancel" hidden style="padding:5px">取消</button>
+        </div>
+      </div>
+      <div id="expList"></div>
+    </aside>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>公司</th><th>岗位</th><th>Base</th><th>匹配度</th><th>阶段</th>
+          <th>投递时间</th><th>投递截止</th><th>要求</th><th>备注</th><th></th>
+        </tr></thead>
+        <tbody id="jobsBody"></tbody>
+      </table>
+      <div class="empty" id="emptyTip" hidden>暂无岗位记录<br><span>切到「对话」视图粘贴 JD，或点右上角手动添加</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head"><b id="mTitle"></b><button id="mClose">✕</button></div>
+    <div class="modal-body">
+      <h4>岗位要求</h4><div class="reqbox" id="mReq"></div>
+      <h4>JD 原文</h4><div class="jdpre" id="mJd"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="resumeModal" hidden>
+  <div class="modal-box" style="width:min(760px,94vw)">
+    <div class="modal-head"><b>简历管理</b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)">
+        <img id="rpPreview" alt="证件照" style="width:52px;height:68px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#f2f3f5">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600">证件照（显示在定制简历 PDF 右上角）</div>
+          <div style="font-size:12px;color:var(--sub);margin:2px 0 6px">全局一张，上传一次所有岗位共用；仅用于 PDF，不影响复制文本。</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="ghost" id="rpUpload" type="button" style="padding:5px 12px">📎 上传证件照</button>
+            <input type="file" id="rpFile" accept=".jpg,.jpeg,.png,.webp" hidden>
+            <span id="rpStatus" style="font-size:12px;color:var(--sub)"></span>
+          </div>
+        </div>
+      </div>
+      <div id="rList"></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="ghost" id="rUploadBtn" type="button">📎 上传文件（PDF/Word/MD/TXT）</button>
+        <input type="file" id="rFile" accept=".pdf,.docx,.md,.txt" hidden>
+      </div>
+      <h4 id="rFormTitle">新增简历（粘贴全文，可按求职方向维护多个版本）</h4>
+      <input id="rName" placeholder="简历名称，如：产品运营方向" style="width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;outline:none;margin-bottom:8px">
+      <textarea id="rContent" placeholder="粘贴简历全文…" style="width:100%;min-height:180px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit;outline:none;resize:vertical"></textarea>
+      <div style="margin-top:10px;display:flex;gap:10px">
+        <button class="primary" id="rSave" style="padding:6px 18px">保存并启用</button>
+        <button class="ghost" id="rCancel" hidden>取消编辑</button>
+      </div>
+      <p style="font-size:12px;color:#8f959e;margin:10px 0 0">匹配将使用「使用中」的简历；同方向建议只保留一个启用版本。</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="resumeTrModal" hidden>
+  <div class="modal-box" style="width:min(780px,94vw)">
+    <div class="modal-head"><b id="rtTitle"></b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div id="rtStatus" style="font-size:13px;color:var(--sub);margin-bottom:8px"></div>
+      <pre id="rtMd" style="white-space:pre-wrap;font:inherit;font-size:13px;background:#f7f8fa;border-radius:8px;padding:14px;margin:0;max-height:440px;overflow:auto"></pre>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="primary" id="rtCopy" style="padding:6px 18px">📋 复制英文</button>
+        <button class="ghost" id="rtPdf" style="padding:6px 14px">📥 英文PDF（一页）</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="matchModal" hidden>
+  <div class="modal-box">
+    <div class="modal-head"><b id="mmTitle"></b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+        <span id="mmScore" style="font-size:34px;font-weight:700;color:var(--blue)"></span>
+        <div>
+          <div style="font-weight:600">综合评估</div>
+          <div id="mmRec" style="font-size:12px;color:#8f959e"></div>
+          <div id="mmTime" style="font-size:12px;color:#8f959e"></div>
+        </div>
+      </div>
+      <div id="mmVeto" hidden style="background:#fdf0e0;color:#d97a00;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px"></div>
+      <div id="mmDims"></div>
+      <h4>📌 证据链</h4><ul class="mlist ok" id="mmMatched"></ul>
+      <h4>⚠ 弱点</h4><ul class="mlist gap" id="mmGaps"></ul>
+      <h4>› 建议</h4><ul class="mlist tip" id="mmTips"></ul>
+      <div style="margin-top:14px"><button class="ghost" id="mmRematch">↻ 重新匹配</button></div>
+    </div>
+  </div>
+</div>
+
+<section id="view-interview" class="view" hidden>
+  <div class="iv-setup" id="ivSetup">
+    <div class="iv-card">
+      <h3>🎤 模拟面试</h3>
+      <p style="margin:0 0 12px">选择岗位与面试官，AI 面试官基于 JD、简历和收藏面经出题、追问并逐题评分。</p>
+      <select id="ivJob" class="inp" style="margin-bottom:8px"></select>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <select id="ivType" class="inp" style="flex:1;min-width:90px">
+          <option>技术面</option><option>行为面</option><option>HR面</option><option>综合面</option>
+        </select>
+        <select id="ivRound" class="inp" style="flex:1;min-width:80px">
+          <option>一面</option><option>二面</option><option>三面</option><option>HR面</option>
+        </select>
+        <select id="ivPersona" class="inp" style="flex:1.4;min-width:120px">
+          <option value="senior">陈工 · 资深面试官（严谨）</option>
+          <option value="peer">小林 · 一线工程师（随和）</option>
+          <option value="hr">王HR · 动机/匹配</option>
+          <option value="manager">刘总 · 经理（全局观）</option>
+        </select>
+      </div>
+      <div class="av-wrap">
+        <img id="ivAvPreview" class="av-preview" alt="面试官">
+        <div style="flex:1;min-width:220px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:6px;cursor:pointer">
+            <input type="checkbox" id="ivLearnStyle" checked> 📚 参考真实面试风格（我的面试 + 该公司面经）
+          </label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="radio" name="ivAv" value="random" checked> 随机头像</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="radio" name="ivAv" value="upload"> 上传照片</label>
+            <button class="ghost" id="ivAvBtn" style="padding:3px 10px;font-size:12px" hidden>选择 jpg</button>
+            <input type="file" id="ivAvFile" accept=".jpg,.jpeg,.png,.webp" hidden>
+            <button class="ghost" id="ivAvRand" style="padding:3px 10px;font-size:12px">换一个</button>
+          </div>
+        </div>
+      </div>
+      <button class="primary" id="ivStart" style="width:100%">开始面试</button>
+    </div>
+    <h4 style="margin:0 0 10px;font-size:13px;color:var(--sub);font-weight:500">历史记录</h4>
+    <div id="ivHistory"></div>
+
+    <div class="iv-card" style="margin-top:20px">
+      <h3>📝 面试复盘</h3>
+      <p style="margin:0 0 12px">记录真实面试（公司/轮次/被问问题/自评），AI 生成复盘报告。</p>
+      <input id="rvCompany" class="inp" placeholder="公司" style="margin-bottom:8px">
+      <input id="rvTitle" class="inp" placeholder="岗位" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select id="rvRound" class="inp" style="flex:1">
+          <option>一面</option><option>二面</option><option>三面</option><option>HR面</option><option>终面</option><option>其他</option>
+        </select>
+        <input id="rvDate" type="date" class="inp" style="flex:1">
+        <input id="rvRating" type="number" min="0" max="100" class="inp" placeholder="自评0-100" style="flex:1">
+      </div>
+      <textarea id="rvQuestions" class="inp" placeholder="被问的问题（每行一道，必填才能 AI 复盘）" style="min-height:80px;resize:vertical;margin-bottom:8px"></textarea>
+      <textarea id="rvNotes" class="inp" placeholder="备注（表现/卡壳点）" style="min-height:50px;resize:vertical;margin-bottom:8px"></textarea>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px;cursor:pointer">
+        <input type="checkbox" id="rvToJing" checked> 同时存入面经库「我的面试」（供模拟面试学习风格）
+      </label>
+      <button class="primary" id="rvSave" style="padding:6px 18px">保存并 AI 复盘</button>
+      <div id="rvList" style="margin-top:14px"></div>
+    </div>
+  </div>
+  <div id="ivSession" hidden style="flex:1;display:flex;flex-direction:column;min-height:0">
+    <div class="iv-topbar">
+      <b id="ivTitle"></b>
+      <button class="ghost" id="ivReportBtn" hidden>📊 查看报告</button>
+      <button class="ghost" id="ivFinish">🏁 结束并生成报告</button>
+      <button class="ghost" id="ivQuit">退出</button>
+    </div>
+    <div class="iv-video" id="ivVideo">
+      <div class="iv-cam">
+        <img id="ivAvImg" alt="面试官" onerror="this.style.display='none';document.getElementById('ivAvOff').style.display='flex'">
+        <div class="off" id="ivAvOff" style="display:none">👤 面试官</div>
+        <div class="iv-cam-dot"></div>
+        <div class="iv-cam-label">面试官 · 视频中</div>
+      </div>
+      <div class="iv-cam">
+        <video id="ivUserCam" autoplay muted playsinline></video>
+        <div class="off" id="ivCamOff">🎥 开启摄像头</div>
+        <div class="iv-cam-label">你</div>
+      </div>
+    </div>
+    <div id="ivMsgs" style="flex:1;overflow-y:auto;padding:16px 20px"></div>
+    <div class="composer">
+      <textarea id="ivInput" placeholder="输入你的回答…（Enter 发送，Shift+Enter 换行）"></textarea>
+      <button class="ghost" id="ivMic" title="语音输入（Chrome/Edge）">🎤</button>
+      <button class="primary" id="ivSend">发送</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="reportModal" hidden>
+  <div class="modal-box" style="width:min(720px,94vw)">
+    <div class="modal-head"><b id="rpTitle"></b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+        <span id="rpScore" style="font-size:34px;font-weight:700;color:var(--blue)"></span>
+        <div>
+          <div style="font-weight:600">综合得分</div>
+          <div style="font-size:12px;color:#8f959e">四维度评估 · 逐题反馈</div>
+        </div>
+      </div>
+      <div id="rpDims"></div>
+      <h4>✓ 亮点</h4><ul class="mlist ok" id="rpStrengths"></ul>
+      <h4>⚠ 待改进</h4><ul class="mlist gap" id="rpImprove"></ul>
+      <h4>› 接下来练什么</h4><ul class="mlist tip" id="rpPractice"></ul>
+      <h4>逐题反馈</h4><div id="rpPerQ"></div>
+    </div>
+  </div>
+</div>
+
+<section id="view-eval" class="view" hidden>
+  <div style="flex:1;overflow-y:auto;padding:24px;max-width:920px;margin:0 auto;width:100%">
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div class="iv-card" style="flex:1;min-width:300px">
+        <h3>🧪 评测集</h3>
+        <p style="margin:0 0 10px">每条 = 一条 JD + 标准答案（公司/岗位/Base/截止），是衡量解析准确率的「标尺」。</p>
+        <div id="evSetList"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="ghost" id="evSetNew" style="flex:1">＋ 新建评测集</button>
+        </div>
+      </div>
+      <div class="iv-card" style="flex:1;min-width:300px">
+        <h3>⚙️ Prompt 版本</h3>
+        <p style="margin:0 0 10px">同一评测集跑不同版本，量化每次 Prompt 改动的效果。</p>
+        <div id="evVerList"></div>
+        <button class="ghost" id="evVerNew" style="width:100%">＋ 新增版本</button>
+      </div>
+    </div>
+    <div class="iv-card">
+      <h3>▶ 运行评测</h3>
+      <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px"><label class="evlab">评测集</label><select id="evRunSet"></select></div>
+        <div style="flex:1;min-width:160px"><label class="evlab">Prompt 版本</label><select id="evRunVer"></select></div>
+    <div style="flex:0 0 auto;min-width:130px"><label class="evlab">一致性测试</label><select id="evConsist" class="inp"><option value="1">1 次（快）</option><option value="3">3 次（稳）</option></select></div>
+        <button class="primary" id="evRun" style="padding:8px 22px">开始评测</button>
+        <button class="ghost" id="evCompare">📊 多模型对比</button>
+      </div>
+      <div id="evResult" class="ev-result"></div>
+    </div>
+    <div class="iv-card">
+      <h3>📈 历史运行</h3>
+      <div id="evRuns"></div>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="evCaseModal" hidden>
+  <div class="modal-box" style="width:min(800px,94vw)">
+    <div class="modal-head"><b id="evCaseTitle"></b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div id="evCaseList"></div>
+      <div style="border-top:1px solid var(--line);padding-top:12px;margin-top:12px">
+        <b id="evCaseFormTitle" style="font-size:13px">新增用例</b>
+        <textarea id="evCaseJd" placeholder="JD 全文" style="width:100%;min-height:80px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;outline:none;resize:vertical;margin-top:8px"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+          <input id="evCaseCompany" placeholder="标准·公司" style="flex:1;min-width:120px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;outline:none">
+          <input id="evCaseTitleI" placeholder="标准·岗位" style="flex:1;min-width:120px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;outline:none">
+          <input id="evCaseBase" placeholder="标准·Base" style="flex:1;min-width:120px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;outline:none">
+          <input id="evCaseDeadline" type="date" style="border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;outline:none">
+        </div>
+        <button class="primary" id="evCaseAdd" style="padding:6px 18px">添加用例</button>
+        <button class="ghost" id="evCaseCancel" hidden>取消编辑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="view-daily" class="view" hidden>
+  <div class="iv-setup">
+    <div class="iv-card">
+      <h3>📮 秋招日报</h3>
+      <p>AI 把岗位数据包装成日报（今日新增 / 临期 / 高匹配 / 进度），一键推送飞书，也可定时自动推送。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:220px"><label class="evlab">飞书 chat_id</label><input id="dgChat" placeholder="oc_xxx" style="width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit;outline:none"></div>
+        <div style="flex:1;min-width:130px"><label class="evlab">定时时间</label><input id="dgTime" type="time" style="width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;outline:none"></div>
+        <div style="flex:1;min-width:120px"><label class="evlab">定时推送</label><label style="display:flex;align-items:center;gap:6px;padding:7px 0;cursor:pointer"><input type="checkbox" id="dgEnabled"> 启用</label></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <button class="primary" id="dgGenerate" style="padding:8px 20px">生成日报预览</button>
+        <button class="ghost" id="dgPush">立即推送到飞书</button>
+        <button class="ghost" id="dgSave">保存配置</button>
+      </div>
+      <div id="dgStatus" style="font-size:12px;color:var(--sub);margin-top:10px"></div>
+    </div>
+    <div class="iv-card" id="dgPreviewCard" hidden>
+      <h3>预览</h3>
+      <pre id="dgPreview" style="white-space:pre-wrap;font:inherit;font-size:13px;background:#f7f8fa;border-radius:8px;padding:14px;margin:0;max-height:420px;overflow:auto"></pre>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="matModal" hidden>
+  <div class="modal-box" style="width:min(720px,94vw)">
+    <div class="modal-head"><b id="matTitle"></b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="mat-tab on" id="matTailorBtn">✍️ 定制简历</button>
+        <button class="mat-tab" id="matGreetBtn">💬 打招呼话术</button>
+      </div>
+      <div id="matChanges" style="font-size:12px;color:var(--sub);margin-bottom:10px"></div>
+      <pre id="matContent" style="white-space:pre-wrap;font:inherit;font-size:13px;background:#f7f8fa;border-radius:8px;padding:14px;margin:0;max-height:420px;overflow:auto"></pre>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="primary" id="matCopy" style="padding:6px 18px">📋 复制</button>
+        <button class="ghost" id="matPdf">📥 下载 PDF（一页）</button>
+        <button class="ghost" id="matDownload" hidden>⬇ 下载 .md</button>
+        <button class="ghost" id="matRegen" hidden>↻ 重新生成</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="rewriteModal" hidden>
+  <div class="modal-box" style="width:min(800px,94vw)">
+    <div class="modal-head"><b id="rwTitle"></b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div id="rwMatch">
+        <div id="rwEval" hidden>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+            <span id="rwEScore" style="font-size:34px;font-weight:700;color:var(--blue)"></span>
+            <div>
+              <div style="font-weight:600">综合评估</div>
+              <div id="rwERec" style="font-size:12px;color:#8f959e"></div>
+            </div>
+          </div>
+          <div id="rwEVeto" hidden style="background:#fdf0e0;color:#d97a00;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px"></div>
+          <div id="rwEDims"></div>
+          <div id="rwEEvidence"></div>
+          <div id="rwEWeak"></div>
+          <div id="rwESugg"></div>
+          <div style="border-top:1px solid var(--line);margin:12px 0 10px"></div>
+        </div>
+        <p id="rwHint" style="font-size:13px;color:var(--sub);margin:0 0 10px"></p>
+        <div id="rwCands"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button class="primary" id="rwGen" style="padding:6px 20px">✍️ 生成改写简历</button>
+          <button class="ghost" id="rwRematch" style="padding:6px 14px">↻ 重新评估</button>
+          <span id="rwCount" style="font-size:12px;color:var(--sub)"></span>
+        </div>
+      </div>
+      <div id="rwResult" hidden>
+        <div id="rwChanges" style="background:#f0f7ff;color:#234663;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px"></div>
+        <pre id="rwMd" style="white-space:pre-wrap;font:inherit;font-size:13px;background:#f7f8fa;border-radius:8px;padding:14px;margin:0;max-height:380px;overflow:auto"></pre>
+        <textarea id="rwMdEdit" hidden style="width:100%;min-height:380px;box-sizing:border-box;font:inherit;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px;resize:vertical;white-space:pre-wrap"></textarea>
+        <div id="rwEditRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="primary" id="rwCopy" style="padding:6px 18px">📋 复制中文</button>
+          <button class="ghost" id="rwPdf" style="padding:6px 14px">📥 中文PDF（一页）</button>
+          <button class="ghost" id="rwEn" style="padding:6px 14px">🌐 翻译成英文</button>
+          <button class="ghost" id="rwPolish" style="padding:6px 14px">✨ AI 润色</button>
+          <button class="ghost" id="rwEdit" style="padding:6px 14px">✏️ 编辑</button>
+          <button class="ghost" id="rwSave" style="padding:6px 14px">💾 另存为简历版本</button>
+          <button class="ghost" id="rwBack" style="padding:6px 14px">← 返回匹配</button>
+        </div>
+        <div id="rwEditRow2" style="display:none;gap:8px;margin-top:12px;align-items:center">
+          <button class="primary" id="rwEditSave" style="padding:6px 18px">💾 保存修改</button>
+          <button class="ghost" id="rwEditPolish" style="padding:6px 14px">✨ 润色（基于编辑内容）</button>
+          <button class="ghost" id="rwEditCancel" style="padding:6px 14px">取消</button>
+          <span style="font-size:12px;color:var(--sub)">保存后可用 复制 / PDF / 翻译 / 润色 / 另存</span>
+        </div>
+        <div id="rwEnBox" hidden style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+          <h4 style="margin:0 0 8px;font-size:13px;color:var(--sub)">🌐 英文版</h4>
+          <pre id="rwMdEn" style="white-space:pre-wrap;font:inherit;font-size:13px;background:#f7f8fa;border-radius:8px;padding:14px;margin:0;max-height:300px;overflow:auto"></pre>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="ghost" id="rwCopyEn" style="padding:6px 14px">📋 复制英文</button>
+            <button class="ghost" id="rwPdfEn" style="padding:6px 14px">📥 英文PDF（一页）</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="view-settings" class="view" hidden>
+  <div class="iv-setup">
+    <div class="iv-card">
+      <h3>⚙️ 模型配置</h3>
+      <p style="margin:0 0 12px">支持任意 OpenAI-compatible 接口（DeepSeek / Qwen / GLM / 豆包 / Kimi / 本地 Ollama）。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:160px"><label class="evlab">预设</label><select id="llmPreset" class="inp"></select></div>
+        <div style="flex:2;min-width:220px"><label class="evlab">Base URL</label><input id="llmBase" class="inp" placeholder="https://api.deepseek.com"></div>
+        <div style="flex:1;min-width:140px"><label class="evlab">模型名</label><input id="llmModel" class="inp" placeholder="deepseek-chat"></div>
+      </div>
+      <div style="margin-top:8px"><label class="evlab">API Key</label><input id="llmKey" type="password" class="inp" placeholder="sk-..."></div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="primary" id="llmSave" style="padding:6px 18px">保存为当前模型</button>
+        <button class="ghost" id="llmTest">测试连接</button>
+      </div>
+      <div id="llmStatus" style="font-size:12px;color:var(--sub);margin-top:10px"></div>
+    </div>
+    <div class="iv-card">
+      <h3>📚 模型配置表</h3>
+      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">每个模型一行（名称 / Base / 模型 / Key）。首页对话页顶部的模型下拉会自动列出全部，一键切换；评测页多模型对比也用这些。</p>
+      <table class="ustable">
+        <thead><tr><th>名称</th><th>Base URL</th><th>模型</th><th>Key</th><th></th></tr></thead>
+        <tbody id="smBody"></tbody>
+      </table>
+      <div style="border-top:1px solid var(--line);padding-top:12px;margin-top:10px">
+        <b style="font-size:13px">＋ 添加模型</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+          <input id="smName" class="inp" placeholder="名称（如 DeepSeek V4 Pro）" style="flex:1;min-width:110px">
+          <input id="smBase" class="inp" placeholder="Base URL" style="flex:2;min-width:190px">
+          <input id="smModel" class="inp" placeholder="模型名" style="flex:1;min-width:110px">
+        </div>
+        <input id="smKey" type="password" class="inp" placeholder="API Key" style="margin-bottom:8px">
+        <button class="primary" id="smAdd" style="padding:6px 18px">添加</button>
+      </div>
+    </div>
+    <div class="iv-card">
+      <h3>⚖️ 辅助模型（评估/改写/翻译）</h3>
+      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">「✏️ 评估与改写」和「🌐 翻译」用更快/更省的模型加速（opencode Go 下默认 deepseek-v4-flash，避免慢模型超时）。留空自动。</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input id="evModel" class="inp" placeholder="评估模型（如 deepseek-v4-flash）" style="flex:2;min-width:200px">
+        <input id="evBase" class="inp" placeholder="Base（默认跟随当前模型）" style="flex:2;min-width:180px">
+        <button class="ghost" id="evSave" style="padding:6px 16px">保存</button>
+      </div>
+      <input id="evKey" type="password" class="inp" placeholder="Key（默认跟随当前模型）" style="margin-top:8px">
+      <div id="evStatus" style="font-size:12px;color:var(--sub);margin-top:8px"></div>
+    </div>
+    <div class="iv-card">
+      <h3>🌐 翻译设置</h3>
+      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">定制简历翻译成英文的方式：默认用当前模型（零成本）；或填 DeepL API Key（免费版 Key 以 :fx 结尾）获得更高质量的商务翻译。</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="trProvider" class="inp" style="flex:1;min-width:150px">
+          <option value="llm">应用内 LLM（默认）</option>
+          <option value="deepl">DeepL API</option>
+        </select>
+        <input id="trDeeplKey" type="password" class="inp" placeholder="DeepL API Key（可选）" style="flex:2;min-width:220px">
+        <button class="ghost" id="trSave" style="padding:6px 16px">保存</button>
+      </div>
+      <div id="trStatus" style="font-size:12px;color:var(--sub);margin-top:8px"></div>
+    </div>
+    <div class="iv-card">
+      <h3>📥 面经抓取方式</h3>
+      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">小红书等平台反爬较强，直连可能抓不到。Jina Reader 是第三方网页解析服务（免费额度）；网络受限时可配本地代理（如 Clash 的 127.0.0.1:7897）。最终兜底是手动粘贴正文。</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="jrReader" class="inp" style="flex:1;min-width:200px">
+          <option value="auto">自动（先直连，失败自动换 Jina）</option>
+          <option value="direct">仅直连</option>
+          <option value="jina">仅 Jina Reader（第三方）</option>
+        </select>
+        <input id="jrProxy" class="inp" placeholder="代理（可选，如 http://127.0.0.1:7897）" style="flex:1.5;min-width:200px">
+        <button class="ghost" id="jrSave" style="padding:6px 16px">保存</button>
+      </div>
+      <div id="jrStatus" style="font-size:12px;color:var(--sub);margin-top:8px"></div>
+    </div>
+    <div class="iv-card">
+      <h3>📕 小红书抓取（Playwright）</h3>
+      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">粘贴小红书笔记链接可自动抓取正文；图片型笔记自动用视觉模型转写。抓不到时：① 填登录 Cookie（浏览器登录小红书后 F12 → 网络 → 任意请求 → 复制 Cookie 粘贴过来）② 设置代理 ③ 手动粘贴正文兜底。</p>
+      <input id="xhCookie" type="password" class="inp" placeholder="小红书登录 Cookie（可选，登录后成功率更高）" style="margin-bottom:8px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <input id="xhVision" class="inp" placeholder="视觉模型（图片转写，默认 deepseek-v4-flash-vision-exp）" style="flex:2;min-width:220px">
+        <input id="xhVisionBase" class="inp" placeholder="视觉 Base（默认跟随当前模型）" style="flex:2;min-width:180px">
+      </div>
+      <input id="xhVisionKey" type="password" class="inp" placeholder="视觉 Key（默认跟随当前模型）" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="primary" id="xhSave" style="padding:6px 16px">保存</button>
+        <button class="ghost" id="xhTest" style="padding:6px 16px">🔍 测试抓取</button>
+        <input id="xhTestUrl" class="inp" placeholder="粘贴一条小红书笔记链接测试" style="flex:1;min-width:200px">
+      </div>
+      <div id="xhStatus" style="font-size:12px;color:var(--sub);margin-top:8px;white-space:pre-wrap"></div>
+    </div>
+    <div class="iv-card">
+      <h3>📊 用量与成本</h3>
+      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">所有 LLM 调用自动统计 token 用量与估算成本（按 DeepSeek 官方价）。</p>
+      <div id="usageBox" style="font-size:13px;line-height:1.8"></div>
+      <div style="margin-top:8px"><button class="ghost" id="cacheClear">🗑 清空结果缓存</button></div>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="rvModal" hidden>
+  <div class="modal-box" style="width:min(680px,94vw)">
+    <div class="modal-head"><b id="rvMTitle"></b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <div id="rvMInfo" style="font-size:13px;color:var(--sub);margin-bottom:10px"></div>
+      <h4>AI 复盘报告</h4>
+      <div id="rvMReview" class="reqbox" style="white-space:pre-wrap"></div>
+      <div style="margin-top:12px"><button class="ghost" id="rvMAnalyze">↻ 重新复盘</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="jingModal" hidden>
+  <div class="modal-box" style="width:min(760px,94vw)">
+    <div class="modal-head"><b id="jmTitle"></b><span style="flex:1"></span><button class="ghost" id="jmGo" style="padding:4px 12px;font-size:12px">📚 去面经库</button><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <b style="font-size:13px">＋ 添加面经（支持链接提取 / 粘贴正文）</b>
+      <input id="jmUrl" class="inp" placeholder="粘贴面经链接（Reddit/牛客/知乎等，小红书反爬抓不到就粘贴正文）" style="margin:8px 0">
+      <textarea id="jmText" class="inp" placeholder="或直接粘贴面经正文…（如已填链接会自动抓取）" style="min-height:70px;resize:vertical;margin-bottom:8px"></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <input id="jmCompany" class="inp" placeholder="公司" style="flex:1;min-width:110px">
+        <input id="jmTitleI" class="inp" placeholder="岗位" style="flex:1;min-width:110px">
+        <select id="jmFolder" class="inp" style="flex:1;min-width:130px"><option value="0">未分类</option></select>
+        <button class="ghost" id="jmFetch">🌐 抓取链接</button>
+      </div>
+      <textarea id="jmPreview" class="inp" placeholder="解析结果预览（问题清单/要点）…" style="min-height:90px;resize:vertical;margin-bottom:8px" disabled></textarea>
+      <div style="display:flex;gap:8px">
+        <button class="ghost" id="jmParse">🔍 解析</button>
+        <button class="primary" id="jmSave" style="padding:6px 18px">保存到面经库</button>
+      </div>
+      <div id="jmList" style="margin-top:14px"></div>
+      <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:12px">
+        <b style="font-size:13px">⛓ 批量导入（多条链接，每条分开保存）</b>
+        <p style="font-size:12px;color:var(--sub);margin:4px 0 8px">每行一条链接（小红书/牛客/知乎等），自动 抓取→解析→逐条入库。最多 20 条，每条解析消耗少量 token。</p>
+        <textarea id="jmBatch" class="inp" placeholder="每行一条链接…" style="min-height:90px;resize:vertical;margin-bottom:8px"></textarea>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="jmBatchFolder" class="inp" style="flex:1;min-width:130px"><option value="0">未分类</option></select>
+          <button class="primary" id="jmBatchRun" style="padding:6px 18px">开始批量导入</button>
+        </div>
+        <div id="jmBatchResult" style="margin-top:10px;font-size:12px;line-height:1.7"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="view-jings" class="view" hidden>
+  <div style="flex:1;display:flex;min-height:0">
+    <div class="jf-side">
+      <button class="ghost" id="jfNew" style="width:100%;margin-bottom:10px">＋ 新建文件夹</button>
+      <div id="jfList"></div>
+    </div>
+    <div class="jg-main">
+      <div class="jg-toolbar">
+        <input id="jgQ" class="inp" placeholder="搜索 公司/岗位/关键词…（小红书正文可直接粘贴在添加里）" style="flex:1">
+        <button class="ghost" id="jgAdd">＋ 添加面经</button>
+      </div>
+      <div id="jgList"></div>
+    </div>
+  </div>
+</section>
+
+<section id="view-monitor" class="view" hidden>
+  <div class="iv-setup" style="max-width:900px">
+    <div class="iv-card">
+      <h3>🩺 运行状态</h3>
+      <div id="moStatus" style="font-size:13px;line-height:1.9;margin-bottom:10px"></div>
+      <table class="ustable">
+        <thead><tr><th>模块</th><th>次数</th><th>平均耗时</th><th>总耗时</th><th>输入字符</th><th>输出字符</th></tr></thead>
+        <tbody id="moTable"></tbody>
+      </table>
+      <div style="margin-top:12px"><button class="ghost" id="moRefresh">↻ 刷新</button></div>
+    </div>
+    <div class="iv-card">
+      <h3>📜 最近运行日志</h3>
+      <div id="moLog" style="font-size:12px"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+const STAGES = ["未投递","已投递","简历评估","AI面试","一面","二面","三面","HR面","Offer","已挂"];
+const COLORS = {
+  "未投递":["#8f959e","#f2f3f5"],
+  "已投递":["#3370ff","#eaf0ff"],
+  "简历评估":["#0e9f9f","#e2f6f6"],
+  "AI面试":["#7f5af0","#f0ecfd"],
+  "一面":["#2ea64f","#e8f7ee"],
+  "二面":["#127f8f","#e4f2f4"],
+  "三面":["#d97a00","#fdf0e0"],
+  "HR面":["#c2417f","#fbeaf3"],
+  "Offer":["#b8860b","#fdf5df"],
+  "已挂":["#e5484d","#fdecec"]
+};
+const PALETTE = ["#0ea5a5","#7f5af0","#d5409e","#e67700","#14c0cc","#2eaf6c","#5b8ff9","#b8860b","#c2417f","#1890ff","#8f5a3c","#0f9fff","#f56a00","#667eea"];
+let allStages = STAGES.slice();
+let customColorMap = {};
+
+function hexToBg(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return "rgba(" + r + "," + g + "," + b + ",0.12)";
+}
+function colorFor(s){
+  if(COLORS[s]) return COLORS[s];
+  if(!customColorMap[s]){
+    const i = Object.keys(customColorMap).length;
+    const hex = PALETTE[i % PALETTE.length];
+    customColorMap[s] = [hex, hexToBg(hex)];
+  }
+  return customColorMap[s];
+}
+function stageStyle(s){
+  const c = colorFor(s);
+  return "color:" + c[0] + ";background:" + c[1];
+}
+async function loadStages(){
+  try{
+    const r = await api("/api/stages");
+    allStages = r.stages || STAGES.slice();
+    allStages.forEach(s => colorFor(s));
+  }catch(e){ console.error(e); }
+}
+let jobs = [];
+let filter = null;
+let resumes = [];
+let activeResume = null;
+let editRid = null;
+
+const $ = id => document.getElementById(id);
+
+function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
+function escAttr(s){return esc(s).replace(/"/g,"&quot;");}
+
+async function api(path, opts){
+  const r = await fetch(path, opts ? Object.assign({}, opts, {headers:{"Content-Type":"application/json"}}) : undefined);
+  if(!r.ok){
+    let msg = r.statusText;
+    try{ const d = await r.json(); msg = d.detail || msg; }catch(e){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+async function loadJobs(){
+  try{
+    jobs = await api("/api/jobs");
+    jobs.forEach(j => { try{ j._d = j.match_detail ? JSON.parse(j.match_detail) : null; }catch(e){ j._d = null; } });
+    renderChips(); renderTable();
+    $("tableCount").textContent = jobs.length;
+  }catch(e){ console.error(e); }
+}
+
+async function loadResumes(){
+  try{
+    resumes = await api("/api/resumes");
+    activeResume = resumes.find(r => r.is_active) || null;
+  }catch(e){ console.error(e); }
+}
+
+function daysLeft(d){
+  if(!d) return null;
+  const t = new Date(d + "T23:59:59").getTime();
+  if(isNaN(t)) return null;
+  return Math.ceil((t - Date.now()) / 86400000);
+}
+
+function renderChips(){
+  const counts = {};
+  jobs.forEach(j => counts[j.stage] = (counts[j.stage] || 0) + 1);
+  let h = '<button class="chip' + (filter===null?" active":"") + '" data-f="">全部 ' + jobs.length + '</button>';
+  allStages.forEach(s => {
+    if(counts[s]) h += '<button class="chip' + (filter===s?" active":"") + '" data-f="'+s+'">'+s+' '+counts[s]+'</button>';
+  });
+  $("chips").innerHTML = h;
+}
+
+function rowHTML(j){
+  const dl = daysLeft(j.deadline);
+  const dcls = dl===null ? "" : (dl<0 ? "d-over" : (dl<=3 ? "d-urgent" : ""));
+  const opts = allStages.map(s => '<option' + (s===j.stage?" selected":"") + '>'+s+'</option>').join("") + '<option value="__custom__">＋ 自定义…</option>';
+  const ms = j.match_score || 0;
+  const hasDetail = ms && j._d;
+  const mcls = !ms ? "m-none" : (ms>=80 ? "m-hi" : (ms>=60 ? "m-mid" : "m-lo"));
+  return '<tr data-id="'+j.id+'">' +
+    '<td contenteditable="true" data-field="company">'+esc(j.company)+'</td>' +
+    '<td contenteditable="true" data-field="title">'+esc(j.title)+'</td>' +
+    '<td contenteditable="true" data-field="base">'+esc(j.base)+'</td>' +
+    '<td><button class="match-badge '+mcls+'" data-act="'+(hasDetail?"view":"match")+'" title="'+(hasDetail?"查看匹配详情":"点击运行匹配")+'">'+(ms ? String(ms) : "—")+'</button></td>' +
+    '<td><select class="stage" data-field="stage" style="'+stageStyle(j.stage)+'">'+opts+'</select></td>' +
+    '<td><input type="date" class="dt" data-field="applied_at" value="'+escAttr(j.applied_at||"")+'"></td>' +
+    '<td><input type="date" class="dt '+dcls+'" data-field="deadline" value="'+escAttr(j.deadline||"")+'"></td>' +
+    '<td><div class="reqcell" title="点击查看要求与 JD 原文">'+esc(j.requirements)+'</div></td>' +
+    '<td contenteditable="true" data-field="notes">'+esc(j.notes)+'</td>' +
+    '<td style="white-space:nowrap"><button class="del" title="删除">🗑</button> <button class="tailor" data-act="rewrite" title="JD 改写简历（从经历库匹配）">✏️</button> <button class="tailor" data-act="materials" title="定制简历/打招呼">✍️</button> <button class="tailor" data-act="jings" title="该公司面经库">📚</button></td>' +
+  '</tr>';
+}
+
+function renderTable(){
+  const list = filter ? jobs.filter(j => j.stage === filter) : jobs;
+  $("jobsBody").innerHTML = list.map(rowHTML).join("");
+  $("emptyTip").hidden = list.length > 0;
+}
+
+async function patch(id, data){
+  try{ await api("/api/jobs/" + id, {method:"PUT", body: JSON.stringify(data)}); }
+  catch(e){ alert("保存失败：" + e.message); }
+}
+
+const body = $("jobsBody");
+
+body.addEventListener("keydown", e => {
+  if(e.target.isContentEditable && e.key === "Enter"){ e.preventDefault(); e.target.blur(); }
+});
+
+body.addEventListener("focusout", e => {
+  const el = e.target;
+  if(!el.isContentEditable) return;
+  const tr = el.closest("tr"); if(!tr) return;
+  const id = +tr.dataset.id;
+  const field = el.dataset.field;
+  const val = el.textContent.trim();
+  const job = jobs.find(j => j.id === id);
+  if(!job || job[field] === val) return;
+  job[field] = val;
+  patch(id, {[field]: val});
+});
+
+body.addEventListener("change", async e => {
+  const el = e.target;
+  const tr = el.closest("tr"); if(!tr) return;
+  const id = +tr.dataset.id;
+  const field = el.dataset.field; if(!field) return;
+  const val = el.value;
+  const job = jobs.find(j => j.id === id); if(!job) return;
+  if(field === "stage"){
+    if(val === "__custom__"){
+      const name = prompt("自定义阶段名称（保存后永久加入下拉选项）：");
+      if(!name || !name.trim()){ el.value = job.stage; return; }
+      try{
+        const r = await api("/api/stages", {method:"POST", body: JSON.stringify({name: name.trim()})});
+        allStages = r.stages;
+        allStages.forEach(s => colorFor(s));
+        job.stage = name.trim();
+        if(job.stage !== "未投递" && !job.applied_at){
+          job.applied_at = new Date().toISOString().slice(0,10);
+          patch(id, {stage: job.stage, applied_at: job.applied_at});
+        } else {
+          patch(id, {stage: job.stage});
+        }
+        renderTable();
+      }catch(e){ alert(e.message); el.value = job.stage; }
+      return;
+    }
+    job.stage = val;
+    el.setAttribute("style", stageStyle(val));
+    if(val !== "未投递" && !job.applied_at){
+      const today = new Date().toISOString().slice(0,10);
+      job.applied_at = today;
+      patch(id, {stage: val, applied_at: today});
+      renderTable();
+      return;
+    }
+  } else {
+    job[field] = val;
+  }
+  patch(id, {[field]: val});
+});
+
+body.addEventListener("click", async e => {
+  const tr = e.target.closest("tr"); if(!tr) return;
+  const job = jobs.find(j => j.id === +tr.dataset.id); if(!job) return;
+  if(e.target.classList.contains("del")){
+    if(!confirm("删除「" + (job.company||"?") + " · " + (job.title||"?") + "」？")) return;
+    try{ await api("/api/jobs/" + job.id, {method:"DELETE"}); loadJobs(); }catch(err){ alert(err.message); }
+  } else if(e.target.classList.contains("reqcell")){
+    openModal(job);
+  } else if(e.target.classList.contains("match-badge")){
+    if(job.match_score && job._d) openMatchModal(job);
+    else runMatch(job.id, e.target);
+  } else if(e.target.dataset.act === "jings"){
+    openJingModal(job);
+  } else if(e.target.dataset.act === "rewrite"){
+    openRewrite(job);
+  } else if(e.target.classList.contains("tailor")){
+    openMaterialsModal(job);
+  }
+});
+
+$("chips").addEventListener("click", e => {
+  const c = e.target.closest(".chip"); if(!c) return;
+  filter = c.dataset.f || null;
+  renderChips(); renderTable();
+});
+
+$("addBtn").addEventListener("click", async () => {
+  try{ await api("/api/jobs", {method:"POST", body: JSON.stringify({})}); loadJobs(); }
+  catch(e){ alert("添加失败：" + e.message); }
+});
+
+function switchView(v){
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.view === v));
+  $("view-chat").hidden = v !== "chat";
+  $("view-table").hidden = v !== "table";
+  $("view-interview").hidden = v !== "iv";
+  $("view-jings").hidden = v !== "jings";
+  $("view-daily").hidden = v !== "daily";
+  $("view-monitor").hidden = v !== "monitor";
+  $("view-settings").hidden = v !== "settings";
+  if(v === "chat") loadChatModels();
+  if(v === "table"){ loadJobs(); loadExps(); }
+  if(v === "iv") loadIv();
+  if(v === "jings") loadJings();
+  if(v === "daily") loadDaily();
+  if(v === "monitor") loadMonitor();
+  if(v === "settings") loadSettings();
+}
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => switchView(t.dataset.view));
+});
+
+function openModal(job){
+  $("mTitle").textContent = (job.company || "未命名公司") + " · " + (job.title || "未命名岗位");
+  $("mReq").textContent = job.requirements || "（空）";
+  $("mJd").textContent = job.jd_text || "（未保存 JD 原文）";
+  $("modal").hidden = false;
+}
+$("mClose").addEventListener("click", () => { $("modal").hidden = true; });
+$("modal").addEventListener("click", e => { if(e.target === $("modal")) $("modal").hidden = true; });
+
+const msgList = $("msgList");
+
+function addMsg(side, html){
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + side;
+  const b = document.createElement("div");
+  b.className = "bubble";
+  b.innerHTML = html;
+  wrap.appendChild(b);
+  msgList.appendChild(wrap);
+  msgList.scrollTop = msgList.scrollHeight;
+  return b;
+}
+
+function userJdBubble(text){
+  const b = addMsg("user", '<div class="jdtext">' + esc(text) + '</div>');
+  const tgl = document.createElement("div");
+  tgl.className = "tgllink";
+  tgl.textContent = "展开全文";
+  tgl.addEventListener("click", () => {
+    const jt = b.querySelector(".jdtext");
+    jt.classList.toggle("open");
+    tgl.textContent = jt.classList.contains("open") ? "收起" : "展开全文";
+  });
+  b.appendChild(tgl);
+}
+
+function cardHTML(d){
+  return '<div class="card">' +
+    '<h4>✨ 解析结果（可修改后入表）</h4>' +
+    (d.warning ? '<div style="background:#fdf0e0;color:#d97a00;border-radius:6px;padding:6px 10px;font-size:12px;margin-bottom:10px">⚠️ ' + esc(d.warning) + '，请核对补充</div>' : '') +
+    '<div class="frow"><label>公司</label><input data-f="company" value="' + escAttr(d.company) + '"></div>' +
+    '<div class="frow"><label>岗位</label><input data-f="title" value="' + escAttr(d.title) + '"></div>' +
+    '<div class="frow"><label>Base</label><input data-f="base" value="' + escAttr(d.base) + '"></div>' +
+    '<div class="frow"><label>截止</label><input type="date" data-f="deadline" value="' + escAttr(d.deadline) + '"></div>' +
+    '<div class="frow"><label>要求</label><textarea data-f="requirements">' + esc(d.requirements) + '</textarea></div>' +
+    '<div class="card-actions"><button class="primary c-ok">✓ 确认入表</button><button class="ghost c-re">↻ 重新解析</button></div>' +
+  '</div>';
+}
+
+function wireCard(bubble, jd){
+  const card = bubble.querySelector(".card");
+  card.querySelector(".c-ok").addEventListener("click", async () => {
+    const val = f => (card.querySelector('[data-f="' + f + '"]').value || "").trim();
+    const payload = {
+      company: val("company"), title: val("title"), base: val("base"),
+      requirements: val("requirements"), deadline: val("deadline"),
+      stage: "未投递", jd_text: jd
+    };
+    try{
+      await api("/api/jobs", {method:"POST", body: JSON.stringify(payload)});
+      card.querySelector(".card-actions").innerHTML = '<span class="badge-ok">✓ 已入表</span>';
+      addMsg("bot", "已添加：<b>" + esc(payload.company || "未命名公司") + "</b> · " + esc(payload.title || "未命名岗位") + "\n可继续粘贴下一个 JD，或切到「表格」视图补充投递进度。");
+      loadJobs();
+    }catch(e){ alert("入表失败：" + e.message); }
+  });
+  card.querySelector(".c-re").addEventListener("click", async () => {
+    card.innerHTML = "<h4>↻ 重新解析中…</h4>";
+    try{
+      const d = await api("/api/jd/parse", {method:"POST", body: JSON.stringify({text: jd})});
+      bubble.innerHTML = cardHTML(d);
+      wireCard(bubble, jd);
+    }catch(e){
+      bubble.innerHTML = "❌ " + esc(e.message);
+    }
+  });
+}
+
+async function sendJD(){
+  const ta = $("jdInput");
+  const text = ta.value.trim();
+  if(!text) return;
+  ta.value = "";
+  userJdBubble(text);
+  const pend = addMsg("bot", "正在解析 JD…");
+  try{
+    const d = await api("/api/jd/parse", {method:"POST", body: JSON.stringify({text})});
+    pend.innerHTML = cardHTML(d);
+    wireCard(pend, text);
+  }catch(e){
+    pend.innerHTML = "❌ " + esc(e.message) + "<br>请确认后端已启动。";
+  }
+}
+
+$("sendBtn").addEventListener("click", sendJD);
+$("jdInput").addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendJD(); }
+});
+
+document.querySelectorAll(".modal").forEach(m => {
+  m.addEventListener("click", e => { if(e.target === m) m.hidden = true; });
+});
+document.querySelectorAll(".mclose").forEach(b => {
+  b.addEventListener("click", () => { b.closest(".modal").hidden = true; });
+});
+
+function fillList(ul, html, plain){
+  ul.innerHTML = html || '<li class="plain" style="color:#8f959e">' + plain + '</li>';
+}
+
+function openMatchModal(job){
+  const d = job._d;
+  if(!d) return;
+  $("mmTitle").textContent = (job.company || "?") + " · " + (job.title || "?");
+  const score = d.final_score != null ? d.final_score : (d.raw_score || job.match_score || 0);
+  $("mmScore").textContent = score;
+  $("mmScore").style.color = score >= 75 ? "#2ea64f" : (score >= 55 ? "#d97a00" : "#e5484d");
+  const rec = d.recommendation || "待定";
+  const recColor = rec === "推荐" ? "#2ea64f" : (rec === "不推荐" ? "#e5484d" : "#d97a00");
+  $("mmRec").innerHTML = "结论：<b style='color:" + recColor + "'>" + esc(rec) + "</b>" + (d.veto_triggered ? "（触发否决项）" : "");
+  $("mmTime").textContent = job.matched_at ? "评估于 " + job.matched_at : "";
+  const vd = d.veto_details || [];
+  const failed = vd.filter(v => !v.passed);
+  if(d.veto_triggered && failed.length){
+    $("mmVeto").hidden = false;
+    $("mmVeto").innerHTML = "⚠ 前置否决项未满足：<br>" + failed.map(v => "· " + esc(v.item || "条件") + "：JD 要求「" + esc(v.jd_requirement || "") + "」，简历为「" + esc(v.candidate_status || "") + "」").join("<br>");
+  } else {
+    $("mmVeto").hidden = true;
+  }
+  const dims = d.dimension_scores || {};
+  const rows = [];
+  if(dims.skill_match && dims.skill_match.score != null) rows.push(["技能匹配", dims.skill_match.score]);
+  if(dims.experience_match && dims.experience_match.score != null) rows.push(["经历匹配", dims.experience_match.score]);
+  if(dims.potential_score != null) rows.push(["潜力加分", dims.potential_score]);
+  if(dims.format_score != null) rows.push(["格式可读性", dims.format_score]);
+  $("mmDims").innerHTML = rows.map(function(x){
+    const v = Math.max(0, Math.min(100, parseInt(x[1]) || 0));
+    const col = v >= 75 ? "#2ea64f" : (v >= 55 ? "#d97a00" : "#e5484d");
+    return '<div class="dimrow"><label>' + x[0] + '</label><div class="bar"><i style="width:' + v + '%;background:' + col + '"></i></div><span class="num">' + v + '</span></div>';
+  }).join("");
+  fillList($("mmMatched"), (d.evidence_chain || []).map(x => "<li>" + esc(x) + "</li>").join(""), "无明显证据");
+  fillList($("mmGaps"), (d.weaknesses || []).map(x => "<li>" + esc(x) + "</li>").join(""), "无明显弱点");
+  fillList($("mmTips"), (d.suggestions || []).map(x => "<li>" + esc(x) + "</li>").join(""), "暂无建议");
+  $("mmRematch").onclick = () => runMatch(job.id);
+  $("matchModal").hidden = false;
+}
+
+async function runMatch(id, btn){
+  if(!activeResume){
+    alert("请先在「📄 简历」中添加并启用一份简历");
+    openResumeModal();
+    return;
+  }
+  if(btn){ btn.textContent = "…"; btn.classList.add("m-run"); }
+  try{
+    await api("/api/jobs/" + id + "/match", {method:"POST", body: JSON.stringify({})});
+    await loadJobs();
+    const job = jobs.find(j => j.id === id);
+    if(job && job._d) openMatchModal(job);
+  }catch(e){
+    alert("匹配失败：" + e.message);
+    loadJobs();
+  }
+}
+
+$("matchAllBtn").addEventListener("click", async () => {
+  if(!activeResume){
+    alert("请先在「📄 简历」中添加并启用一份简历");
+    openResumeModal();
+    return;
+  }
+  let todo = jobs.filter(j => !j.match_score);
+  if(!todo.length){
+    if(!confirm("所有岗位已有匹配结果，是否全部重新匹配？")) return;
+    todo = jobs.slice();
+  }
+  const btn = $("matchAllBtn");
+  const total = todo.length;
+  const q = todo.map(j => j.id);
+  let done = 0;
+  btn.disabled = true;
+  btn.textContent = "匹配中 0/" + total;
+  const worker = async () => {
+    while(q.length){
+      const id = q.shift();
+      try{ await api("/api/jobs/" + id + "/match", {method:"POST", body: JSON.stringify({})}); }catch(e){}
+      done++;
+      btn.textContent = "匹配中 " + done + "/" + total;
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  btn.disabled = false;
+  btn.textContent = "⚡ 一键匹配";
+  await loadJobs();
+});
+
+function renderResumes(){
+  $("rList").innerHTML = resumes.map(r =>
+    '<div class="rrow" data-rid="' + r.id + '">' +
+      '<span class="rn" title="' + escAttr(r.name || "") + '">' + esc(r.name || "未命名简历") + '</span>' +
+      (r.is_active ? '<span class="rtag">使用中</span>' : '') +
+      '<span class="rlink" data-ra="translate">🌐 翻译</span>' +
+      '<span class="rlink" data-ra="edit">编辑</span>' +
+      (r.is_active ? '' : '<span class="rlink" data-ra="use">启用</span>') +
+      '<span class="rdel" data-ra="del">删除</span>' +
+    '</div>'
+  ).join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0 14px">还没有简历，粘贴到下方新增</div>';
+}
+
+function openResumeModal(){
+  renderResumes();
+  loadPhotoPreview();
+  $("resumeModal").hidden = false;
+}
+
+async function loadPhotoPreview(){
+  try{
+    const info = await api("/api/photo/info");
+    if(info.has){ $("rpPreview").src = "/api/photo?" + Date.now(); $("rpStatus").textContent = ""; }
+    else { $("rpPreview").removeAttribute("src"); $("rpStatus").textContent = "未上传"; }
+  }catch(e){}
+}
+$("rpUpload").addEventListener("click", () => $("rpFile").click());
+$("rpFile").addEventListener("change", async () => {
+  const f = $("rpFile").files[0];
+  if(!f) return;
+  const fd = new FormData();
+  fd.append("file", f);
+  try{
+    const r = await fetch("/api/photo/upload", {method:"POST", body: fd});
+    if(!r.ok){ let m = r.statusText; try{ const d = await r.json(); m = d.detail || m; }catch(e){} throw new Error(m); }
+    await r.json();
+    loadPhotoPreview();
+    $("rpStatus").textContent = "✓ 已上传";
+    $("rpStatus").style.color = "#2ea64f";
+  }catch(e){ alert("上传失败：" + e.message); }
+  $("rpFile").value = "";
+});
+
+$("resumeBtn").addEventListener("click", openResumeModal);
+
+$("rList").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".rrow"); if(!row) return;
+  const rid = +row.dataset.rid;
+  const r = resumes.find(x => x.id === rid); if(!r) return;
+  if(el.dataset.ra === "edit"){
+    editRid = rid;
+    $("rFormTitle").textContent = "编辑简历：" + (r.name || "未命名");
+    $("rName").value = r.name || "";
+    $("rContent").value = r.content || "";
+    $("rCancel").hidden = false;
+  } else if(el.dataset.ra === "translate"){
+    await translateResumeText(r);
+  } else if(el.dataset.ra === "use"){
+    try{
+      await api("/api/resumes/" + rid, {method:"PUT", body: JSON.stringify({is_active: true})});
+      await loadResumes(); renderResumes();
+    }catch(err){ alert(err.message); }
+  } else if(el.dataset.ra === "del"){
+    if(!confirm("删除简历「" + (r.name || "未命名") + "」？")) return;
+    try{
+      await api("/api/resumes/" + rid, {method:"DELETE"});
+      if(editRid === rid) $("rCancel").click();
+      await loadResumes(); renderResumes();
+    }catch(err){ alert(err.message); }
+  }
+});
+
+let rtResumeEn = null;
+async function translateResumeText(r){
+  rtResumeEn = null;
+  $("rtTitle").textContent = "🌐 翻译成英文：" + (r.name || "未命名简历");
+  $("rtStatus").textContent = "翻译中…（调用当前模型，约 5-15s）";
+  $("rtStatus").style.color = "";
+  $("rtMd").textContent = "";
+  $("rtCopy").disabled = true;
+  $("rtPdf").disabled = true;
+  $("resumeTrModal").hidden = false;
+  try{
+    const d = await api("/api/resume/translate_text", {method:"POST", body: JSON.stringify({content: r.content || ""})});
+    rtResumeEn = d.resume_en;
+    $("rtMd").textContent = d.resume_en_md;
+    $("rtStatus").textContent = "✓ 翻译完成（可复制或下载英文PDF）";
+    $("rtStatus").style.color = "#2ea64f";
+    $("rtCopy").disabled = false;
+    $("rtPdf").disabled = false;
+  }catch(e){
+    $("rtStatus").textContent = "✗ " + e.message;
+    $("rtStatus").style.color = "#e5484d";
+  }
+}
+
+$("rtCopy").addEventListener("click", async () => { if(await copyText($("rtMd").textContent)) alert("已复制英文简历"); });
+$("rtPdf").addEventListener("click", async () => {
+  if(!rtResumeEn) return;
+  try{ await downloadResumePdf({resume: rtResumeEn, lang: "en"}); }catch(e){ alert("PDF 生成失败：" + e.message); }
+});
+
+$("rSave").addEventListener("click", async () => {
+  const name = $("rName").value.trim() || "默认简历";
+  const content = $("rContent").value.trim();
+  if(!content){ alert("简历内容不能为空"); return; }
+  try{
+    if(editRid){
+      await api("/api/resumes/" + editRid, {method:"PUT", body: JSON.stringify({name: name, content: content, is_active: true})});
+    }else{
+      await api("/api/resumes", {method:"POST", body: JSON.stringify({name: name, content: content, is_active: true})});
+    }
+    editRid = null;
+    $("rName").value = ""; $("rContent").value = "";
+    $("rFormTitle").textContent = "新增简历（粘贴全文，可按求职方向维护多个版本）";
+    $("rCancel").hidden = true;
+    await loadResumes(); renderResumes();
+  }catch(e){ alert("保存失败：" + e.message); }
+});
+
+$("rCancel").addEventListener("click", () => {
+  editRid = null;
+  $("rName").value = ""; $("rContent").value = "";
+  $("rFormTitle").textContent = "新增简历（粘贴全文，可按求职方向维护多个版本）";
+  $("rCancel").hidden = true;
+});
+
+let ivCur = null;
+
+function barHTML(k, v){
+  v = Math.max(0, Math.min(100, parseInt(v) || 0));
+  const col = v>=80 ? "#2ea64f" : v>=60 ? "#d97a00" : "#8f959e";
+  return '<div class="dimrow"><label>' + k + '</label><div class="bar"><i style="width:' + v + '%;background:' + col + '"></i></div><span class="num">' + v + '</span></div>';
+}
+
+async function loadIv(){
+  try{
+    const list = await api("/api/jobs");
+    $("ivJob").innerHTML = list.map(j => '<option value="' + j.id + '">' + esc((j.company || "?") + " · " + (j.title || "?")) + '</option>').join("") || '<option value="">（先去「📋 表格」添加岗位）</option>';
+  }catch(e){}
+  try{
+    const ivs = await api("/api/interviews");
+    $("ivHistory").innerHTML = ivs.map(iv =>
+      '<div class="rrow" data-iid="' + iv.id + '">' +
+        '<span class="rn">' + esc(iv.title || "模拟面试") + '</span>' +
+        (iv.status === "done" && iv.overall ? '<span class="rtag">' + iv.overall + ' 分</span>' : '<span class="rtag" style="background:#f2f3f5;color:#8f959e">未完成</span>') +
+        '<span style="font-size:12px;color:#8f959e;flex:none">' + esc((iv.created_at || "").slice(5, 16)) + '</span>' +
+        '<span class="rlink" data-ia="view">查看</span>' +
+        '<span class="rdel" data-ia="del">删除</span>' +
+      '</div>').join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">还没有面试记录</div>';
+  }catch(e){}
+  loadReviews();
+}
+
+function showIvSession(on){
+  $("ivSetup").hidden = on;
+  $("ivSession").hidden = !on;
+}
+
+function ivBubble(m){
+  if(m.role === "user"){
+    return '<div class="msg user"><div class="bubble">' + esc(m.content || "") + '</div></div>';
+  }
+  const name = (ivCur && ivCur.personaName) ? ivCur.personaName : "面试官";
+  const rep = m.reply || "";
+  const q = m.question || "";
+  const sc = m.score;
+  const fb = m.feedback || "";
+  let scoreHtml = "";
+  if(sc != null){
+    const c = sc >= 70 ? ["#e8f7ee","#2ea64f"] : sc >= 50 ? ["#fdf0e0","#d97a00"] : ["#fdecec","#e5484d"];
+    scoreHtml = '<span style="display:inline-block;background:' + c[0] + ';color:' + c[1] + ';border-radius:8px;padding:1px 9px;font-size:12px;font-weight:700;margin:4px 0">本题 ' + sc + ' 分</span> ' + (fb ? '<span style="font-size:12px;color:#8f959e">' + esc(fb) + '</span>' : '') + '<br><br>';
+  }
+  return '<div class="msg bot"><div class="bubble">' +
+    '<div style="font-size:12px;color:var(--blue);font-weight:600;margin-bottom:4px">👤 ' + name + '</div>' +
+    (rep ? '<span style="color:#8f959e;font-size:13px">' + esc(rep) + '</span><br><br>' : '') +
+    scoreHtml +
+    '<b>' + esc(q) + '</b></div></div>';
+}
+
+function renderIvSession(){
+  $("ivTitle").textContent = (ivCur && ivCur.title) || "模拟面试";
+  $("ivMsgs").innerHTML = ivCur ? ivCur.msgs.map(ivBubble).join("") : "";
+  $("ivMsgs").scrollTop = $("ivMsgs").scrollHeight;
+  if(ivCur && ivCur.avatar){
+    $("ivAvImg").src = ivCur.avatar;
+    $("ivAvOff").style.display = "none";
+  }
+  const ro = !ivCur || ivCur.readonly;
+  $("ivInput").disabled = ro;
+  $("ivSend").disabled = ro;
+  $("ivFinish").hidden = ro || !ivCur || ivCur.finished;
+  $("ivReportBtn").hidden = !(ivCur && ivCur.report);
+}
+
+$("ivStart").addEventListener("click", async () => {
+  const jid = $("ivJob").value;
+  if(!jid){ alert("请先在「📋 表格」中添加岗位"); return; }
+  $("ivStart").disabled = true;
+  $("ivStart").textContent = "面试官就位中…";
+  try{
+    const r = await api("/api/interview/start", {method:"POST", body: JSON.stringify({job_id: +jid, persona: $("ivPersona").value, itype: $("ivType").value, round: $("ivRound").value, avatar: ivAvatar, learn: $("ivLearnStyle").checked})});
+    ivCur = {id: r.id, title: r.title, msgs: r.messages, readonly: false, finished: false, report: null, personaName: r.persona_name, avatar: r.avatar || ivAvatar};
+    renderIvSession();
+    showIvSession(true);
+    startCamera();
+    $("ivInput").focus();
+  }catch(e){ alert(e.message); }
+  $("ivStart").disabled = false;
+  $("ivStart").textContent = "开始面试";
+});
+
+async function ivSendMsg(){
+  if(!ivCur || ivCur.readonly) return;
+  const ta = $("ivInput");
+  const text = ta.value.trim();
+  if(!text) return;
+  ta.value = "";
+  ivCur.msgs.push({role:"user", content:text});
+  $("ivMsgs").insertAdjacentHTML("beforeend", ivBubble({role:"user", content:text}));
+  $("ivMsgs").scrollTop = $("ivMsgs").scrollHeight;
+  $("ivSend").disabled = true;
+  $("ivInput").disabled = true;
+  try{
+    const r = await api("/api/interview/" + ivCur.id + "/answer", {method:"POST", body: JSON.stringify({content:text})});
+    ivCur.msgs.push(r.message);
+    $("ivMsgs").insertAdjacentHTML("beforeend", ivBubble(r.message));
+    $("ivMsgs").scrollTop = $("ivMsgs").scrollHeight;
+  }catch(e){ alert(e.message); }
+  $("ivSend").disabled = false;
+  $("ivInput").disabled = false;
+  $("ivInput").focus();
+}
+
+$("ivSend").addEventListener("click", ivSendMsg);
+$("ivInput").addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); ivSendMsg(); }
+});
+
+$("ivFinish").addEventListener("click", async () => {
+  if(!ivCur || ivCur.readonly) return;
+  $("ivFinish").disabled = true;
+  $("ivFinish").textContent = "生成中…";
+  try{
+    const r = await api("/api/interview/" + ivCur.id + "/finish", {method:"POST", body: JSON.stringify({})});
+    ivCur.report = r.report;
+    ivCur.finished = true;
+    renderIvSession();
+    openReport(r.report, ivCur.title);
+  }catch(e){ alert(e.message); }
+  $("ivFinish").disabled = false;
+  $("ivFinish").textContent = "🏁 结束并生成报告";
+});
+
+$("ivQuit").addEventListener("click", () => {
+  stopCamera();
+  if(ivRec){ try{ ivRec.stop(); }catch(e){} ivRec = null; $("ivMic").textContent = "🎤"; }
+  showIvSession(false);
+  loadIv();
+});
+
+$("ivReportBtn").addEventListener("click", () => {
+  if(ivCur && ivCur.report) openReport(ivCur.report, ivCur.title);
+});
+
+$("ivHistory").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".rrow"); if(!row) return;
+  const iid = +row.dataset.iid;
+  if(el.dataset.ia === "del"){
+    if(!confirm("删除这条面试记录？")) return;
+    try{ await api("/api/interviews/" + iid, {method:"DELETE"}); loadIv(); }catch(err){ alert(err.message); }
+    return;
+  }
+  if(el.dataset.ia === "view"){
+    try{
+      const s = await api("/api/interviews/" + iid);
+      ivCur = {id: s.id, title: s.title, msgs: s.messages || [], readonly: true, finished: s.status === "done", report: s.report, personaName: s.persona_name, avatar: s.avatar || ""};
+      renderIvSession();
+      showIvSession(true);
+    }catch(err){ alert(err.message); }
+  }
+});
+
+function openReport(rp, title){
+  if(!rp) return;
+  $("rpTitle").textContent = (title || "模拟面试") + " · 面试报告";
+  const overall = rp.overall || 0;
+  $("rpScore").textContent = overall;
+  $("rpScore").style.color = overall>=80 ? "#2ea64f" : overall>=60 ? "#d97a00" : "#8f959e";
+  const dims = rp.dimensions || {};
+  $("rpDims").innerHTML = ["专业深度","表达与结构","岗位匹配","思考深度"].map(k => barHTML(k, dims[k])).join("");
+  fillList($("rpStrengths"), (rp.strengths || []).map(x => "<li>" + esc(x) + "</li>").join(""), "—");
+  fillList($("rpImprove"), (rp.improvements || []).map(x => "<li>" + esc(x) + "</li>").join(""), "—");
+  fillList($("rpPractice"), (rp.practice || []).map(x => "<li>" + esc(x) + "</li>").join(""), "—");
+  const vmap = {"好": "v-good", "中": "v-mid", "差": "v-bad"};
+  $("rpPerQ").innerHTML = (rp.per_q || []).map(q =>
+    '<div class="qitem"><div><span class="verdict ' + (vmap[q.verdict] || "v-mid") + '">' + esc(q.verdict || "中") + '</span><span class="qtext">' + esc(q.question || "") + '</span></div><div class="qfb">' + esc(q.feedback || "") + '</div></div>'
+  ).join("") || '<div style="color:#8f959e;font-size:13px">无逐题记录</div>';
+  $("reportModal").hidden = false;
+}
+
+let evSets = [];
+let evVers = [];
+let evCaseSetId = 0;
+let evEditCase = 0;
+
+function evAccColor(v){
+  return v >= 90 ? "#2ea64f" : v >= 70 ? "#d97a00" : "#e5484d";
+}
+
+async function loadEval(){
+  try{
+    evSets = await api("/api/evalsets");
+    $("evSetList").innerHTML = evSets.map(s =>
+      '<div class="evcase" data-sid="' + s.id + '">' +
+        '<div class="cn"><div>' + esc(s.name || "未命名") + '</div><div class="cm">' + s.case_count + ' 条用例 · ' + esc((s.created_at || "").slice(5, 16)) + '</div></div>' +
+        '<span class="rlink" data-sa="import">导入岗位</span>' +
+        '<span class="rlink" data-sa="cases">用例</span>' +
+        '<span class="rdel" data-sa="del">删除</span>' +
+      '</div>').join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">还没有评测集</div>';
+  }catch(e){}
+  try{
+    evVers = await api("/api/prompt_versions");
+    $("evVerList").innerHTML = evVers.map(v =>
+      '<div class="evcase" data-vid="' + v.id + '">' +
+        '<div class="cn"><div>' + esc(v.name || "未命名") + '</div><div class="cm">' + (v.prompt || "").slice(0, 40) + '</div></div>' +
+        (v.name === "默认模板" ? '' : '<span class="rdel" data-sa="vdel">删除</span>') +
+      '</div>').join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">无版本</div>';
+  }catch(e){}
+  fillEvalSelects();
+  loadEvalRuns();
+}
+
+function fillEvalSelects(){
+  $("evRunSet").innerHTML = evSets.map(s => '<option value="' + s.id + '">' + esc(s.name || "未命名") + ' (' + s.case_count + ' 条)</option>').join("") || '<option value="">（无评测集）</option>';
+  $("evRunVer").innerHTML = evVers.map(v => '<option value="' + v.id + '">' + esc(v.name || "未命名") + '</option>').join("");
+}
+
+async function loadEvalRuns(){
+  try{
+    const runs = await api("/api/eval_runs");
+    $("evRuns").innerHTML = runs.map(r => {
+      const s = r.summary || {};
+      const avg = s.avg == null ? "—" : s.avg + "%";
+      return '<div class="evcase" data-rid="' + r.id + '">' +
+        '<div class="cn"><div>' + esc(r.set_name + " · " + r.ver_name) + ' <b style="color:' + evAccColor(avg === "—" ? 0 : (s.avg||0)) + '">' + avg + '</b></div>' +
+        '<div class="cm">公司 ' + (s.company == null ? "—" : s.company + "%") + ' · 岗位 ' + (s.title == null ? "—" : s.title + "%") + ' · Base ' + (s.base == null ? "—" : s.base + "%") + ' · 截止 ' + (s.deadline == null ? "—" : s.deadline + "%") + ' · ' + esc((r.created_at || "").slice(5, 16)) + '</div></div>' +
+        '<span class="rlink" data-ra="detail">详情</span>' +
+        '<span class="rdel" data-ra="del">删除</span>' +
+      '</div>';
+    }).join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">还没有评测运行</div>';
+  }catch(e){}
+}
+
+function renderEvalResult(summary, per_case){
+  const labels = {company: "公司", title: "岗位", base: "Base", deadline: "截止"};
+  let bars = "";
+  for(const k of ["company", "title", "base", "deadline"]){
+    const v = summary[k];
+    bars += '<div class="evbar"><label>' + labels[k] + '</label><div class="bar"><i style="width:' + (v == null ? 0 : v) + '%;background:' + evAccColor(v == null ? 0 : v) + '"></i></div><span class="num">' + (v == null ? "—" : v + "%") + '</span></div>';
+  }
+  const avg = summary.avg;
+  bars += '<div class="evbar"><label>平均</label><div class="bar"><i style="width:' + (avg == null ? 0 : avg) + '%;background:' + evAccColor(avg == null ? 0 : avg) + '"></i></div><span class="num">' + (avg == null ? "—" : avg + "%") + '</span></div>';
+  if(summary.stable_avg != null){
+    bars += '<div class="evbar"><label>一致性</label><div class="bar"><i style="width:' + summary.stable_avg + '%;background:' + evAccColor(summary.stable_avg) + '"></i></div><span class="num">' + summary.stable_avg + '%</span></div>';
+  }
+  if(summary.recall_avg != null){
+    bars += '<div class="evbar"><label>召回率</label><div class="bar"><i style="width:' + summary.recall_avg + '%;background:' + evAccColor(summary.recall_avg) + '"></i></div><span class="num">' + summary.recall_avg + '%</span></div>';
+  }
+  const rows = (per_case || []).map(pc =>
+    '<div class="evrow"><span class="jd" title="' + escAttr(pc.jd || "") + '">' + esc(pc.jd || "") + '</span>' +
+    '<span class="evdot ' + (pc.res.company ? "okdot" : "baddot") + '">' + (pc.res.company ? "✓" : "✗") + '</span>' +
+    '<span class="evdot ' + (pc.res.title ? "okdot" : "baddot") + '">' + (pc.res.title ? "✓" : "✗") + '</span>' +
+    '<span class="evdot ' + (pc.res.base ? "okdot" : "baddot") + '">' + (pc.res.base ? "✓" : "✗") + '</span>' +
+    (pc.res.deadline === undefined ? '<span class="evdot">·</span>' : '<span class="evdot ' + (pc.res.deadline ? "okdot" : "baddot") + '">' + (pc.res.deadline ? "✓" : "✗") + '</span>') +
+    '</div>').join("") || "";
+  $("evResult").innerHTML =
+    '<div style="font-weight:600;margin-bottom:6px">本次结果 · 平均 ' + (avg == null ? "—" : avg + "%") + '</div>' +
+    bars +
+    (rows ? '<div class="evrow" style="border-top:1px solid var(--line);font-weight:600;color:var(--sub)"><span class="jd">用例</span><span class="evdot">公</span><span class="evdot">岗</span><span class="evdot">B</span><span class="evdot">截</span></div>' + rows : '');
+}
+
+$("evSetNew").addEventListener("click", async () => {
+  const name = prompt("评测集名称：");
+  if(name === null) return;
+  try{ await api("/api/evalsets", {method:"POST", body: JSON.stringify({name: name})}); loadEval(); }catch(e){ alert(e.message); }
+});
+
+$("evVerNew").addEventListener("click", async () => {
+  const name = prompt("版本名称（如 v2-加fewshot）：");
+  if(name === null) return;
+  const text = prompt("Prompt 全文（将作为 system 指令，要求输出 company/title/base/deadline/requirements 的 JSON）：");
+  if(text === null || !text.trim()){ alert("Prompt 不能为空"); return; }
+  try{ await api("/api/prompt_versions", {method:"POST", body: JSON.stringify({name: name, prompt: text})}); loadEval(); }catch(e){ alert(e.message); }
+});
+
+$("evSetList").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".evcase"); if(!row) return;
+  const sid = +row.dataset.sid;
+  if(el.dataset.sa === "del"){
+    if(!confirm("删除该评测集及其全部用例/运行记录？")) return;
+    try{ await api("/api/evalsets/" + sid, {method:"DELETE"}); loadEval(); }catch(err){ alert(err.message); }
+  } else if(el.dataset.sa === "import"){
+    try{
+      const r = await api("/api/evalsets/" + sid + "/cases_from_jobs", {method:"POST", body: JSON.stringify({})});
+      alert("已从岗位导入 " + r.added + " 条用例（重复的已跳过）");
+      loadEval();
+    }catch(err){ alert(err.message); }
+  } else if(el.dataset.sa === "cases"){
+    openEvCases(sid);
+  }
+});
+
+$("evVerList").addEventListener("click", async e => {
+  const el = e.target;
+  if(el.dataset.sa !== "vdel") return;
+  const row = el.closest(".evcase"); if(!row) return;
+  if(!confirm("删除该 Prompt 版本？")) return;
+  try{ await api("/api/prompt_versions/" + row.dataset.vid, {method:"DELETE"}); loadEval(); }catch(err){ alert(err.message); }
+});
+
+$("evRun").addEventListener("click", async () => {
+  const sid = $("evRunSet").value;
+  const vid = $("evRunVer").value;
+  if(!sid){ alert("请先创建评测集"); return; }
+  const consistency = +($("evConsist").value || "1");
+  $("evRun").disabled = true;
+  $("evRun").textContent = "评测中…";
+  try{
+    const r = await api("/api/eval/run", {method:"POST", body: JSON.stringify({evalset_id: +sid, version_id: vid ? +vid : null, consistency: consistency})});
+    renderEvalResult(r.summary, r.per_case);
+    loadEvalRuns();
+  }catch(e){ alert("评测失败：" + e.message); }
+  $("evRun").disabled = false;
+  $("evRun").textContent = "开始评测";
+});
+
+$("evCompare").addEventListener("click", async () => {
+  const sid = $("evRunSet").value;
+  const vid = $("evRunVer").value;
+  if(!sid){ alert("请先创建评测集"); return; }
+  $("evCompare").disabled = true;
+  $("evCompare").textContent = "对比中…";
+  try{
+    const r = await api("/api/eval/compare", {method:"POST", body: JSON.stringify({evalset_id: +sid, version_id: vid ? +vid : null})});
+    renderCompare(r.results);
+  }catch(e){ alert(e.message); }
+  $("evCompare").disabled = false;
+  $("evCompare").textContent = "📊 多模型对比";
+});
+
+function renderCompare(results){
+  const labels = {company:"公司", title:"岗位", base:"Base", deadline:"截止"};
+  let h = '<div style="font-weight:600;margin:12px 0 6px">📊 多模型对比（同一评测集 · 同一 Prompt）</div>';
+  h += '<div class="evrow" style="font-weight:600;color:var(--sub);border-top:1px solid var(--line)"><span class="jd">模型</span>';
+  for(const f of ["company","title","base","deadline"]) h += '<span style="min-width:46px;text-align:right;flex:none">' + labels[f] + '</span>';
+  h += '<span style="min-width:52px;text-align:right;flex:none;font-weight:700">召回</span>';
+  h += '<span style="min-width:52px;text-align:right;flex:none;font-weight:700">平均</span></div>';
+  for(const r of results){
+    if(r.error){
+      h += '<div class="evrow"><span class="jd">' + esc(r.name) + '</span><span style="font-size:12px;color:#e5484d;flex:1">' + esc(r.error) + '</span></div>';
+      continue;
+    }
+    const s = r.summary;
+    h += '<div class="evrow"><span class="jd">' + esc(r.name) + '</span>';
+    for(const f of ["company","title","base","deadline"]) h += '<span style="min-width:46px;text-align:right;flex:none;color:' + evAccColor(s[f]==null?0:s[f]) + '">' + (s[f]==null?"—":s[f]+"%") + '</span>';
+    h += '<span style="min-width:52px;text-align:right;flex:none;color:' + evAccColor(s.recall_avg==null?0:s.recall_avg) + '">' + (s.recall_avg==null?"—":s.recall_avg+"%") + '</span>';
+    h += '<span style="min-width:52px;text-align:right;flex:none;font-weight:700;color:' + evAccColor(s.avg==null?0:s.avg) + '">' + (s.avg==null?"—":s.avg+"%") + '</span></div>';
+  }
+  $("evResult").innerHTML = h;
+}
+
+$("evRuns").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".evcase"); if(!row) return;
+  const rid = +row.dataset.rid;
+  if(el.dataset.ra === "del"){
+    if(!confirm("删除该次运行记录？")) return;
+    try{ await api("/api/eval_runs/" + rid, {method:"DELETE"}); loadEvalRuns(); }catch(err){ alert(err.message); }
+  } else if(el.dataset.ra === "detail"){
+    try{
+      const r = await api("/api/eval_runs/" + rid);
+      renderEvalResult(r.summary, r.per_case);
+    }catch(err){ alert(err.message); }
+  }
+});
+
+async function openEvCases(sid){
+  evCaseSetId = sid;
+  evEditCase = 0;
+  $("evCaseTitle").textContent = "用例管理（评测集 #" + sid + "）";
+  $("evCaseFormTitle").textContent = "新增用例";
+  $("evCaseCancel").hidden = true;
+  $("evCaseJd").value = ""; $("evCaseCompany").value = ""; $("evCaseTitleI").value = ""; $("evCaseBase").value = ""; $("evCaseDeadline").value = "";
+  const cases = await api("/api/evalsets/" + sid + "/cases");
+  $("evCaseList").innerHTML = cases.map(c =>
+    '<div class="evcase" data-cid="' + c.id + '">' +
+      '<div class="cn"><div class="cm">' + esc((c.jd_text || "").slice(0, 60)) + '</div>' +
+      '<div class="cm">标准：' + esc(c.company + " / " + c.title + " / " + c.base) + (c.deadline ? " / " + esc(c.deadline) : "") + '</div></div>' +
+      '<span class="rlink" data-ca="edit">编辑</span>' +
+      '<span class="rdel" data-ca="del">删除</span>' +
+    '</div>').join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">暂无用例</div>';
+  $("evCaseModal").hidden = false;
+}
+
+$("evCaseList").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".evcase"); if(!row) return;
+  const cid = +row.dataset.cid;
+  if(el.dataset.ca === "del"){
+    if(!confirm("删除该用例？")) return;
+    try{ await api("/api/evalcases/" + cid, {method:"DELETE"}); openEvCases(evCaseSetId); }catch(err){ alert(err.message); }
+  } else if(el.dataset.ca === "edit"){
+    const cases = await api("/api/evalsets/" + evCaseSetId + "/cases");
+    const c = cases.find(x => x.id === cid); if(!c) return;
+    evEditCase = cid;
+    $("evCaseFormTitle").textContent = "编辑用例";
+    $("evCaseJd").value = c.jd_text || "";
+    $("evCaseCompany").value = c.company || "";
+    $("evCaseTitleI").value = c.title || "";
+    $("evCaseBase").value = c.base || "";
+    $("evCaseDeadline").value = c.deadline || "";
+    $("evCaseCancel").hidden = false;
+  }
+});
+
+$("evCaseAdd").addEventListener("click", async () => {
+  const payload = {
+    evalset_id: evCaseSetId,
+    jd_text: $("evCaseJd").value.trim(),
+    company: $("evCaseCompany").value.trim(),
+    title: $("evCaseTitleI").value.trim(),
+    base: $("evCaseBase").value.trim(),
+    deadline: $("evCaseDeadline").value
+  };
+  try{
+    if(evEditCase){
+      await api("/api/evalcases/" + evEditCase, {method:"PUT", body: JSON.stringify(payload)});
+    }else{
+      await api("/api/evalcases", {method:"POST", body: JSON.stringify(payload)});
+    }
+    evEditCase = 0;
+    $("evCaseJd").value = ""; $("evCaseCompany").value = ""; $("evCaseTitleI").value = ""; $("evCaseBase").value = ""; $("evCaseDeadline").value = "";
+    $("evCaseFormTitle").textContent = "新增用例";
+    $("evCaseCancel").hidden = true;
+    openEvCases(evCaseSetId);
+  }catch(e){ alert("保存失败：" + e.message); }
+});
+
+$("evCaseCancel").addEventListener("click", () => {
+  evEditCase = 0;
+  $("evCaseJd").value = ""; $("evCaseCompany").value = ""; $("evCaseTitleI").value = ""; $("evCaseBase").value = ""; $("evCaseDeadline").value = "";
+  $("evCaseFormTitle").textContent = "新增用例";
+  $("evCaseCancel").hidden = true;
+});
+
+let dgText = "";
+
+async function loadDaily(){
+  try{
+    const c = await api("/api/digest/config");
+    $("dgChat").value = c.chat_id || "";
+    $("dgTime").value = c.time || "09:00";
+    $("dgEnabled").checked = !!c.enabled;
+    $("dgStatus").textContent = c.has_credentials ? "可推送 · 定时任务" + (c.enabled ? "已启用（" + c.time + "）" : "未启用") : "⚠ 未配置飞书应用凭证（.env 的 FEISHU_APP_ID/SECRET），无法推送";
+    $("dgStatus").style.color = c.has_credentials ? "var(--sub)" : "#d97a00";
+  }catch(e){}
+}
+
+$("dgGenerate").addEventListener("click", async () => {
+  $("dgGenerate").disabled = true;
+  $("dgGenerate").textContent = "生成中…";
+  $("dgPreview").textContent = "";
+  $("dgPreviewCard").hidden = false;
+  try{
+    await sseStream("/api/digest/stream", {}, (t) => {
+      $("dgPreview").textContent += t;
+      $("dgPreview").scrollTop = $("dgPreview").scrollHeight;
+    });
+    dgText = $("dgPreview").textContent;
+  }catch(e){ $("dgPreview").textContent = "❌ " + e.message; }
+  $("dgGenerate").disabled = false;
+  $("dgGenerate").textContent = "生成日报预览";
+});
+
+$("dgPush").addEventListener("click", async () => {
+  try{
+    await api("/api/digest/push", {method:"POST", body: JSON.stringify(dgText ? {text: dgText} : {})});
+    $("dgStatus").textContent = "✓ 已推送到飞书";
+    $("dgStatus").style.color = "#2ea64f";
+  }catch(e){ alert(e.message); }
+});
+
+$("dgSave").addEventListener("click", async () => {
+  try{
+    await api("/api/digest/config", {method:"POST", body: JSON.stringify({chat_id: $("dgChat").value.trim(), time: $("dgTime").value, enabled: $("dgEnabled").checked})});
+    $("dgStatus").textContent = "✓ 配置已保存";
+    $("dgStatus").style.color = "#2ea64f";
+    loadDaily();
+  }catch(e){ alert(e.message); }
+});
+
+$("rUploadBtn").addEventListener("click", () => $("rFile").click());
+$("rFile").addEventListener("change", async e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  $("rUploadBtn").textContent = "解析中…";
+  try{
+    const fd = new FormData();
+    fd.append("file", f);
+    const r = await fetch("/api/resume/upload", {method:"POST", body: fd});
+    if(!r.ok){ const d = await r.json().catch(()=>({})); throw new Error(d.detail || r.statusText); }
+    const d = await r.json();
+    $("rContent").value = d.content;
+    $("rName").value = d.name.replace(/\.(pdf|docx|md|txt)$/i, "");
+    $("rFormTitle").textContent = "已解析，确认无误后点「保存并启用」";
+  }catch(err){ alert("解析失败：" + err.message); }
+  $("rFile").value = "";
+  $("rUploadBtn").textContent = "📎 上传文件（PDF/Word/MD/TXT）";
+});
+
+let matJob = null;
+let matMode = "tailor";
+
+function matSetTab(mode){
+  matMode = mode;
+  $("matTailorBtn").classList.toggle("on", mode === "tailor");
+  $("matGreetBtn").classList.toggle("on", mode === "greet");
+}
+
+function openMaterialsModal(job){
+  matJob = job;
+  $("matTitle").textContent = (job.company || "?") + " · " + (job.title || "?") + " · 求职材料";
+  $("matContent").textContent = "点击上方「定制简历」或「打招呼话术」生成。";
+  $("matChanges").innerHTML = "";
+  $("matDownload").hidden = true;
+  $("matRegen").hidden = true;
+  matSetTab("tailor");
+  $("matModal").hidden = false;
+}
+
+async function sseStream(url, body, onChunk){
+  const r = await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+  if(!r.ok){ let m = r.statusText; try{ const d = await r.json(); m = d.detail || m; }catch(e){} throw new Error(m); }
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  while(true){
+    const {done, value} = await reader.read();
+    if(done) break;
+    buf += dec.decode(value, {stream:true});
+    let idx;
+    while((idx = buf.indexOf("\n\n")) >= 0){
+      const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+      const line = chunk.trim();
+      if(!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if(payload === "[DONE]") return;
+      try{ const d = JSON.parse(payload); if(d.t) onChunk(d.t); }catch(e){}
+    }
+  }
+}
+
+async function genMaterials(mode){
+  if(!matJob) return;
+  matSetTab(mode);
+  const btn = mode === "tailor" ? $("matTailorBtn") : $("matGreetBtn");
+  btn.disabled = true;
+  $("matContent").textContent = "";
+  $("matChanges").innerHTML = "";
+  $("matDownload").hidden = mode !== "tailor";
+  $("matRegen").hidden = true;
+  try{
+    const url = mode === "tailor" ? "/api/tailor/stream" : "/api/greeting/stream";
+    await sseStream(url, {job_id: matJob.id}, (t) => {
+      $("matContent").textContent += t;
+      $("matContent").scrollTop = $("matContent").scrollHeight;
+    });
+    $("matRegen").hidden = false;
+  }catch(e){ $("matContent").textContent = "❌ " + e.message; }
+  btn.disabled = false;
+}
+
+$("matTailorBtn").addEventListener("click", () => genMaterials("tailor"));
+$("matGreetBtn").addEventListener("click", () => genMaterials("greet"));
+
+$("matCopy").addEventListener("click", async () => {
+  const t = $("matContent").textContent;
+  if(!t) return;
+  try{
+    await navigator.clipboard.writeText(t);
+    $("matCopy").textContent = "✓ 已复制";
+    setTimeout(() => { $("matCopy").textContent = "📋 复制"; }, 1500);
+  }catch(e){ alert("复制失败，请手动全选复制"); }
+});
+
+$("matDownload").addEventListener("click", () => {
+  const t = $("matContent").textContent;
+  const blob = new Blob([t], {type:"text/markdown;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = ((matJob && matJob.company) || "resume") + "-定制简历.md";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$("matRegen").addEventListener("click", () => genMaterials(matMode));
+
+async function loadSettings(){
+  try{
+    const c = await api("/api/llm/config");
+    $("llmBase").value = c.base || "";
+    $("llmKey").value = c.key || "";
+    $("llmModel").value = c.model || "";
+    $("llmPreset").innerHTML = '<option value="">自定义…</option>' + c.presets.map(p => '<option value="' + escAttr(p.name) + '">' + esc(p.name) + '</option>').join("");
+    renderSavedModels(c.saved || []);
+  }catch(e){}
+  loadUsage();
+  try{
+    const jr = await api("/api/jing/config");
+    $("jrReader").value = jr.reader || "auto";
+    $("jrProxy").value = jr.proxy || "";
+  }catch(e){}
+  try{
+    const tr = await api("/api/translate/config");
+    $("trProvider").value = tr.provider || "llm";
+    $("trDeeplKey").value = tr.deepl_key || "";
+  }catch(e){}
+  try{
+    const ev = await api("/api/eval/config");
+    $("evModel").value = ev.model || "";
+    $("evBase").value = ev.base || "";
+    $("evKey").value = ev.key || "";
+  }catch(e){}
+  loadXhsConfig();
+}
+
+$("evSave").addEventListener("click", async () => {
+  try{
+    await api("/api/eval/config", {method:"POST", body: JSON.stringify({
+      eval_model: $("evModel").value.trim(), eval_base: $("evBase").value.trim(), eval_key: $("evKey").value.trim()
+    })});
+    $("evStatus").textContent = "✓ 已保存";
+    $("evStatus").style.color = "#2ea64f";
+    setTimeout(() => { $("evStatus").textContent = ""; }, 2000);
+  }catch(e){ alert(e.message); }
+});
+
+$("jrSave").addEventListener("click", async () => {
+  try{
+    await api("/api/jing/config", {method:"POST", body: JSON.stringify({reader: $("jrReader").value, proxy: $("jrProxy").value.trim()})});
+    $("jrStatus").textContent = "✓ 已保存";
+    $("jrStatus").style.color = "#2ea64f";
+    setTimeout(() => { $("jrStatus").textContent = ""; }, 2000);
+  }catch(e){ alert(e.message); }
+});
+
+async function loadXhsConfig(){
+  try{
+    const c = await api("/api/xhs/config");
+    $("xhCookie").value = c.cookie || "";
+    $("xhVision").value = c.vision_model || "";
+    $("xhVisionBase").value = c.vision_base || "";
+    $("xhVisionKey").value = c.vision_key || "";
+    if(!c.has_playwright) $("xhStatus").textContent = "⚠ 未检测到 Playwright（无头浏览器未安装），只能走直连/Jina 兜底";
+  }catch(e){}
+}
+
+$("xhSave").addEventListener("click", async () => {
+  try{
+    await api("/api/xhs/config", {method:"POST", body: JSON.stringify({
+      xhs_cookie: $("xhCookie").value.trim(),
+      xhs_vision_model: $("xhVision").value.trim(),
+      xhs_vision_base: $("xhVisionBase").value.trim(),
+      xhs_vision_key: $("xhVisionKey").value.trim()
+    })});
+    $("xhStatus").textContent = "✓ 已保存";
+    $("xhStatus").style.color = "#2ea64f";
+    setTimeout(() => { $("xhStatus").textContent = ""; }, 2000);
+  }catch(e){ alert(e.message); }
+});
+
+$("xhTest").addEventListener("click", async () => {
+  const url = $("xhTestUrl").value.trim();
+  if(!url){ alert("请先粘贴一条小红书笔记链接"); return; }
+  $("xhTest").disabled = true;
+  $("xhTest").textContent = "抓取中…";
+  $("xhStatus").textContent = "正在直连 + Playwright 渲染…（首次约 6-10s）";
+  $("xhStatus").style.color = "";
+  try{
+    const d = await api("/api/xhs/test", {method:"POST", body: JSON.stringify({url: url})});
+    let s = "✓ 抓取成功（" + (d.reader || "xhs") + "）\n标题：" + (d.title || "无") + "\n正文长度：" + (d.desc || "").length + " · 图片：" + d.images + " 张";
+    if(d.transcribed) s += "\n\n【图片转写】\n" + d.transcribed;
+    if(d.transcribe_error) s += "\n⚠ 图片转写失败：" + d.transcribe_error;
+    $("xhStatus").textContent = s;
+    $("xhStatus").style.color = "#2ea64f";
+  }catch(e){
+    $("xhStatus").textContent = "✗ " + e.message;
+    $("xhStatus").style.color = "#e5484d";
+  }
+  $("xhTest").disabled = false;
+  $("xhTest").textContent = "🔍 测试抓取";
+});
+
+function renderSavedModels(saved){
+  $("smBody").innerHTML = saved.map((s, i) =>
+    '<tr data-i="' + i + '">' +
+      '<td>' + esc(s.name || "模型") + '</td>' +
+      '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(s.base || "") + '</td>' +
+      '<td>' + esc(s.model || "") + '</td>' +
+      '<td>' + ((s.key && s.key.length > 6) ? esc(s.key.slice(0, 6) + "***") : "—") + '</td>' +
+      '<td><span class="rdel" data-sa="del">删除</span></td>' +
+    '</tr>').join("") || '<tr><td colspan="5" style="color:#8f959e;font-size:13px">暂无模型，添加后可切换 / 做多模型对比</td></tr>';
+}
+
+$("llmPreset").addEventListener("change", async () => {
+  const name = $("llmPreset").value;
+  if(!name) return;
+  try{
+    const c = await api("/api/llm/config");
+    const p = c.presets.find(x => x.name === name);
+    if(p){ $("llmBase").value = p.base; $("llmModel").value = p.model; }
+  }catch(e){}
+});
+
+$("llmSave").addEventListener("click", async () => {
+  try{
+    await api("/api/llm/config", {method:"POST", body: JSON.stringify({base: $("llmBase").value.trim(), key: $("llmKey").value.trim(), model: $("llmModel").value.trim()})});
+    $("llmStatus").textContent = "✓ 已保存为当前模型";
+    $("llmStatus").style.color = "#2ea64f";
+  }catch(e){ alert(e.message); }
+});
+
+$("llmTest").addEventListener("click", async () => {
+  $("llmTest").disabled = true;
+  $("llmTest").textContent = "测试中…";
+  try{
+    const r = await api("/api/llm/test", {method:"POST", body: JSON.stringify({base: $("llmBase").value.trim(), key: $("llmKey").value.trim(), model: $("llmModel").value.trim()})});
+    $("llmStatus").textContent = "✓ 连接正常：" + r.reply;
+    $("llmStatus").style.color = "#2ea64f";
+  }catch(e){ $("llmStatus").textContent = "✗ " + e.message; $("llmStatus").style.color = "#e5484d"; }
+  $("llmTest").disabled = false;
+  $("llmTest").textContent = "测试连接";
+});
+
+$("smAdd").addEventListener("click", async () => {
+  try{
+    const r = await api("/api/llm/models", {method:"POST", body: JSON.stringify({name: $("smName").value.trim(), base: $("smBase").value.trim(), model: $("smModel").value.trim(), key: $("smKey").value.trim()})});
+    renderSavedModels(r.saved);
+    $("smName").value = ""; $("smBase").value = ""; $("smModel").value = ""; $("smKey").value = "";
+  }catch(e){ alert(e.message); }
+});
+
+$("smBody").addEventListener("click", async e => {
+  const el = e.target;
+  if(el.dataset.sa !== "del") return;
+  const row = el.closest("tr"); if(!row) return;
+  try{ const r = await api("/api/llm/models/" + row.dataset.i, {method:"DELETE"}); renderSavedModels(r.saved); }catch(err){ alert(err.message); }
+});
+
+async function loadReviews(){
+  try{
+    const rs = await api("/api/reviews");
+    $("rvList").innerHTML = rs.map(r =>
+      '<div class="evcase" data-rid="' + r.id + '">' +
+        '<div class="cn"><div>' + esc((r.company || "?") + " · " + (r.title || "?") + " · " + (r.round || "")) + '</div>' +
+        '<div class="cm">自评 ' + (r.self_rating || "—") + ' · ' + esc(r.date || "") + '</div></div>' +
+        (r.jing_id ? '<span class="rtag" style="background:#eaf6ec;color:#2ea64f">已入面经库</span>' : '') +
+        (r.ai_review ? '' : '<span class="rtag" style="background:#fdf0e0;color:#d97a00">未复盘</span>') +
+        '<span class="rlink" data-ra="view">复盘</span>' +
+        '<span class="rdel" data-ra="del">删除</span>' +
+      '</div>').join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">暂无复盘记录</div>';
+  }catch(e){}
+}
+
+async function showReview(rid, text){
+  const rs = await api("/api/reviews");
+  const r = rs.find(x => x.id === rid);
+  if(r){
+    $("rvMTitle").textContent = (r.company || "?") + " · " + (r.title || "?") + " · " + (r.round || "");
+    $("rvMInfo").textContent = "日期 " + (r.date || "—") + " · 自评 " + (r.self_rating || "—");
+    $("rvMReview").textContent = r.ai_review || text || "（未复盘）";
+  }
+  $("rvMAnalyze").onclick = async () => {
+    try{ const a = await api("/api/reviews/" + rid + "/analyze", {method:"POST", body: JSON.stringify({})}); $("rvMReview").textContent = a.ai_review; loadReviews(); }
+    catch(e){ alert(e.message); }
+  };
+  $("rvModal").hidden = false;
+}
+
+$("rvSave").addEventListener("click", async () => {
+  const payload = {
+    company: $("rvCompany").value.trim(), title: $("rvTitle").value.trim(),
+    round: $("rvRound").value, date: $("rvDate").value,
+    questions: $("rvQuestions").value.trim(), self_rating: parseInt($("rvRating").value) || 0,
+    notes: $("rvNotes").value.trim(), to_jing: $("rvToJing").checked
+  };
+  if(!payload.company && !payload.title){ alert("至少填公司或岗位"); return; }
+  $("rvSave").disabled = true;
+  $("rvSave").textContent = "保存并复盘…";
+  try{
+    const r = await api("/api/reviews", {method:"POST", body: JSON.stringify(payload)});
+    ["rvCompany","rvTitle","rvQuestions","rvNotes","rvRating"].forEach(id => $(id).value = "");
+    if(payload.questions){
+      try{ const a = await api("/api/reviews/" + r.id + "/analyze", {method:"POST", body: JSON.stringify({})}); showReview(r.id, a.ai_review); }
+      catch(e){ alert(e.message); }
+    }
+    loadReviews();
+  }catch(e){ alert(e.message); }
+  $("rvSave").disabled = false;
+  $("rvSave").textContent = "保存并 AI 复盘";
+});
+
+$("rvList").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".evcase"); if(!row) return;
+  const rid = +row.dataset.rid;
+  if(el.dataset.ra === "del"){
+    if(!confirm("删除这条复盘？")) return;
+    try{ await api("/api/reviews/" + rid, {method:"DELETE"}); loadReviews(); }catch(err){ alert(err.message); }
+  } else if(el.dataset.ra === "view"){
+    try{ await showReview(rid, ""); }catch(err){ alert(err.message); }
+  }
+});
+
+async function loadUsage(){
+  try{
+    const s = await api("/api/usage/summary");
+    const c = await api("/api/cache/stats");
+    const rows = s.by_kind.map(k =>
+      '<tr><td>' + esc(k.kind) + '</td><td>' + k.n + '</td><td>' + k.avg_latency + 's</td><td>' + k.total_latency + 's</td></tr>'
+    ).join("");
+    $("usageBox").innerHTML =
+      'LLM 调用 <b>' + s.calls + '</b> 次 · 总耗时 <b>' + s.total_latency + 's</b> · 平均 <b>' + s.avg_latency + 's</b> · 成本 <b>¥' + s.est_cost_yuan + '</b><br>' +
+      '输入 <b>' + (s.in_tokens / 1000).toFixed(1) + 'k</b> token · 输出 <b>' + (s.out_tokens / 1000).toFixed(1) + 'k</b> token · 缓存命中 <b>' + c.count + '</b> 条' +
+      '<table class="ustable"><thead><tr><th>步骤</th><th>次数</th><th>平均耗时</th><th>总耗时</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">暂无</td></tr>') + '</tbody></table>';
+  }catch(e){}
+}
+
+$("cacheClear").addEventListener("click", async () => {
+  try{ await api("/api/cache", {method:"DELETE"}); loadUsage(); }catch(e){ alert(e.message); }
+});
+
+async function loadChatModels(){
+  try{
+    const c = await api("/api/llm/config");
+    let opts = '<option value="__cur__">当前：' + esc(c.model) + '</option>';
+    const savedKeys = (c.saved || []).map(s => (s.base || "") + "|" + (s.model || ""));
+    (c.saved || []).forEach(s => {
+      opts += '<option value="' + escAttr(s.model) + '" data-base="' + escAttr(s.base) + '" data-key="' + escAttr(s.key) + '" data-name="' + escAttr(s.name || s.model) + '">' + esc(s.name || s.model) + '</option>';
+    });
+    (c.presets || []).forEach(p => {
+      if(savedKeys.indexOf(p.base + "|" + p.model) >= 0) return;
+      opts += '<option value="__preset__" data-base="' + escAttr(p.base) + '" data-model="' + escAttr(p.model) + '" data-name="' + escAttr(p.name) + '">预设 · ' + esc(p.name) + '</option>';
+    });
+    if(!(c.saved || []).length){
+      opts += '<option value="" disabled>（还没有已配置模型，选下方预设或去「设置」添加）</option>';
+    }
+    $("chatModel").innerHTML = opts;
+  }catch(e){}
+}
+
+$("chatModel").addEventListener("change", async () => {
+  const sel = $("chatModel");
+  const opt = sel.selectedOptions[0];
+  if(!opt || sel.value === "__cur__"){ $("chatModelStatus").textContent = ""; return; }
+  let base = opt.dataset.base || "";
+  let model = opt.dataset.model || opt.value;
+  let key = opt.dataset.key || "";
+  if(sel.value === "__preset__"){
+    const cur = await api("/api/llm/config");
+    let useKey = cur.key;
+    const sameBase = base && cur.base && base.replace(/\/+$/, "") === cur.base.replace(/\/+$/, "");
+    if(!sameBase || !useKey){
+      useKey = prompt("模型「" + (opt.dataset.name || model) + "」需要 API Key（留空则用当前）：", useKey || "");
+      if(useKey === null){ sel.value = "__cur__"; return; }
+    }
+    key = (useKey || cur.key || "").trim();
+    try{ await api("/api/llm/models", {method:"POST", body: JSON.stringify({name: opt.dataset.name || model, base: base, model: model, key: key})}); }catch(e){}
+  }
+  $("chatModelStatus").textContent = "切换中…";
+  try{
+    await api("/api/llm/config", {method:"POST", body: JSON.stringify({base: base, key: key, model: model})});
+    await loadChatModels();
+    $("chatModelStatus").textContent = "✓ 已切换到 " + model;
+    $("chatModelStatus").style.color = "#2ea64f";
+    setTimeout(() => { $("chatModelStatus").textContent = ""; }, 2500);
+  }catch(e){ alert(e.message); }
+});
+
+$("matPdf").addEventListener("click", async () => {
+  if(!matJob) return;
+  $("matPdf").disabled = true;
+  $("matPdf").textContent = "生成 PDF…";
+  try{
+    const r = await fetch("/api/tailor/pdf", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({job_id: matJob.id})});
+    if(!r.ok){ const d = await r.json().catch(()=>({})); throw new Error(d.detail || r.statusText); }
+    const blob = await r.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = ((matJob.company || "resume") + "-定制简历.pdf");
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }catch(e){ alert("PDF 生成失败：" + e.message); }
+  $("matPdf").disabled = false;
+  $("matPdf").textContent = "📥 下载 PDF（一页）";
+});
+
+let jmCompany = "";
+let jmJings = [];
+let jmParsed = null;
+let jmFrom = "row";
+let jgFolders = [];
+let jgCurFolder = -1;
+let jgQ = "";
+let jgList = [];
+
+async function openJingModal(job){
+  jmFrom = "row";
+  jmCompany = job.company || "";
+  $("jmTitle").textContent = (job.company || "?") + " · 面经库";
+  $("jmCompany").value = jmCompany;
+  $("jmUrl").value = ""; $("jmText").value = ""; $("jmTitleI").value = ""; $("jmPreview").value = "";
+  jmParsed = null;
+  $("jmGo").hidden = false;
+  fillJmFolder(0);
+  await loadJmJings();
+  $("jingModal").hidden = false;
+}
+
+async function loadJmJings(){
+  try{
+    jmJings = await api("/api/jings?company=" + encodeURIComponent(jmCompany));
+    renderJmList();
+  }catch(e){ alert(e.message); }
+}
+
+function renderJmList(){
+  $("jmList").innerHTML = jmJings.map(j =>
+    '<div class="evcase" data-jid="' + j.id + '">' +
+      '<div class="cn"><div>' + (j.is_fav ? "⭐ " : "") + esc(j.title || "面经") + (j.source_url ? ' <span class="rlink" data-ja="open">源</span>' : '') + '</div>' +
+      '<div class="cm">' + (j.questions ? j.questions.length : 0) + ' 题 · ' + esc((j.summary || "").slice(0, 40)) + '</div></div>' +
+      '<span class="rlink" data-ja="fav">' + (j.is_fav ? "取消收藏" : "收藏") + '</span>' +
+      '<span class="rlink" data-ja="detail">详情</span>' +
+      '<span class="rdel" data-ja="del">删除</span>' +
+    '</div>' +
+    '<div class="jm-detail" data-did="' + j.id + '" hidden style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 8px;font-size:13px;white-space:pre-wrap"></div>'
+  ).join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">该公司还没有面经，添加第一条吧</div>';
+}
+
+$("jmList").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".evcase"); if(!row) return;
+  const jid = +row.dataset.jid;
+  const j = jmJings.find(x => x.id === jid); if(!j) return;
+  const detailDiv = document.querySelector('.jm-detail[data-did="' + jid + '"]');
+  if(el.dataset.ja === "fav"){
+    try{ await api("/api/jings/" + jid, {method:"PUT", body: JSON.stringify({is_fav: !j.is_fav})}); await loadJmJings(); }catch(err){ alert(err.message); }
+  } else if(el.dataset.ja === "del"){
+    if(!confirm("删除这条面经？")) return;
+    try{ await api("/api/jings/" + jid, {method:"DELETE"}); await loadJmJings(); }catch(err){ alert(err.message); }
+  } else if(el.dataset.ja === "open"){
+    e.preventDefault(); e.stopPropagation();
+    if(j.source_url) window.open(j.source_url, "_blank");
+  } else if(el.dataset.ja === "detail"){
+    const qs = (j.questions || []).map((q, i) => (i + 1) + ". " + q).join("\n");
+    detailDiv.textContent = (j.summary ? "【要点】" + j.summary + "\n\n" : "") + (qs ? "【问题清单】\n" + qs : "（无问题记录）") + (j.content ? "\n\n【原文】\n" + j.content.slice(0, 800) : "");
+    detailDiv.hidden = !detailDiv.hidden;
+  }
+});
+
+$("jmFetch").addEventListener("click", async () => {
+  const url = $("jmUrl").value.trim();
+  if(!url){ alert("请先粘贴链接"); return; }
+  $("jmFetch").disabled = true; $("jmFetch").textContent = "抓取中…";
+  try{
+    const r = await api("/api/jing/fetch", {method:"POST", body: JSON.stringify({url: url})});
+    $("jmText").value = r.content;
+  }catch(e){ alert(e.message); }
+  $("jmFetch").disabled = false; $("jmFetch").textContent = "🌐 抓取链接";
+});
+
+$("jmParse").addEventListener("click", async () => {
+  const text = $("jmText").value.trim();
+  if(!text){ alert("请先抓取或粘贴面经正文"); return; }
+  $("jmParse").disabled = true; $("jmParse").textContent = "解析中…";
+  try{
+    const r = await api("/api/jing/parse", {method:"POST", body: JSON.stringify({text: text})});
+    jmParsed = r;
+    if(r.company && !$("jmCompany").value) $("jmCompany").value = r.company;
+    if(r.title && !$("jmTitleI").value) $("jmTitleI").value = r.title;
+    const qs = (r.questions || []).map((q, i) => (i + 1) + ". " + q).join("\n");
+    $("jmPreview").value = (r.summary ? "【要点】" + r.summary + "\n\n" : "") + (qs ? "【问题】\n" + qs : "（未识别到问题）");
+  }catch(e){ alert(e.message); }
+  $("jmParse").disabled = false; $("jmParse").textContent = "🔍 解析";
+});
+
+$("jmSave").addEventListener("click", async () => {
+  const company = $("jmCompany").value.trim();
+  const text = $("jmText").value.trim();
+  if(!company){ alert("请填写公司名称"); return; }
+  if(!text){ alert("请先抓取或粘贴面经正文"); return; }
+  const payload = {
+    company: company,
+    title: $("jmTitleI").value.trim(),
+    source_url: $("jmUrl").value.trim(),
+    content: text,
+    folder_id: parseInt($("jmFolder").value) || 0
+  };
+  if(jmParsed){ payload.questions = jmParsed.questions || []; payload.summary = jmParsed.summary || ""; }
+  $("jmSave").disabled = true;
+  try{
+    await api("/api/jing/add", {method:"POST", body: JSON.stringify(payload)});
+    jmParsed = null;
+    $("jmUrl").value = ""; $("jmText").value = ""; $("jmTitleI").value = ""; $("jmPreview").value = "";
+    if(jmFrom === "lib"){ await loadJings(); }
+    else { await loadJmJings(); }
+  }catch(e){ alert(e.message); }
+  $("jmSave").disabled = false;
+});
+
+$("jmGo").addEventListener("click", () => {
+  $("jingModal").hidden = true;
+  jgQ = jmCompany || "";
+  $("jgQ").value = jgQ;
+  jgCurFolder = -1;
+  switchView("jings");
+});
+
+$("jmBatchRun").addEventListener("click", async () => {
+  const links = $("jmBatch").value.split("\n").map(s => s.trim()).filter(Boolean);
+  if(!links.length){ alert("请粘贴至少一条链接（每行一条）"); return; }
+  $("jmBatchRun").disabled = true;
+  $("jmBatchRun").textContent = "批量导入中…（逐条抓取+解析）";
+  $("jmBatchResult").innerHTML = "";
+  try{
+    const r = await api("/api/jing/batch_import", {method:"POST", body: JSON.stringify({links: links, folder_id: +$("jmBatchFolder").value})});
+    let ok = 0, fail = 0;
+    const rows = r.results.map(x => {
+      if(x.status === "ok"){
+        ok++;
+        return '<div style="color:#2ea64f">✓ ' + esc(x.company || "未知公司") + " · " + esc(x.title || "面经") + "（" + x.questions + " 题）</div>";
+      }
+      fail++;
+      return '<div style="color:#e5484d">✗ ' + esc(x.url.slice(0, 50)) + (x.url.length > 50 ? "…" : "") + "：" + esc(x.error || "未知错误") + '</div>';
+    }).join("");
+    $("jmBatchResult").innerHTML = '<b>成功 ' + ok + ' 条，失败 ' + fail + ' 条</b><br>' + rows;
+    $("jmBatch").value = "";
+    await loadJings();
+  }catch(e){ $("jmBatchResult").innerHTML = "✗ " + esc(e.message); }
+  $("jmBatchRun").disabled = false;
+  $("jmBatchRun").textContent = "开始批量导入";
+});
+
+async function loadJings(){
+  try{
+    jgFolders = await api("/api/jing/folders");
+  }catch(e){}
+  renderJf();
+  await renderJgList();
+}
+
+function renderJf(){
+  let h = '<div class="jf-item' + (jgCurFolder === -1 ? " on" : "") + '" data-f="-1"><span>全部</span></div>';
+  h += '<div class="jf-item' + (jgCurFolder === 0 ? " on" : "") + '" data-f="0"><span>未分类</span></div>';
+  jgFolders.forEach(f => {
+    h += '<div class="jf-item' + (jgCurFolder === f.id ? " on" : "") + '" data-f="' + f.id + '"><span>' + esc(f.name) + '</span><span class="cnt">' + f.cnt + '</span><span class="rdel" data-fdel="' + f.id + '" title="删除文件夹">✕</span></div>';
+  });
+  $("jfList").innerHTML = h;
+}
+
+async function renderJgList(){
+  const p = [];
+  if(jgQ) p.push("q=" + encodeURIComponent(jgQ));
+  if(jgCurFolder >= 0) p.push("folder=" + jgCurFolder);
+  try{
+    jgList = await api("/api/jings?" + p.join("&"));
+  }catch(e){ jgList = []; }
+  const folderOpts = '<option value="0">未分类</option>' + jgFolders.map(f => '<option value="' + f.id + '">' + esc(f.name) + '</option>').join("");
+  $("jgList").innerHTML = jgList.map(j => {
+    const cur = j.folder_id || 0;
+    const selOpts = folderOpts.replace('<option value="' + cur + '"', '<option value="' + cur + '" selected');
+    return '<div class="evcase" data-jid="' + j.id + '">' +
+      '<div class="cn"><div>' + (j.is_fav ? "⭐ " : "") + esc((j.company || "?") + " · " + (j.title || "面经")) +
+        (j.source === "review" ? ' <span class="rtag" style="background:#eaf6ec;color:#2ea64f">我的面试</span>' : (j.source === "mock" ? ' <span class="rtag" style="background:#eef4ff;color:#234663">模拟</span>' : '')) +
+        (j.source_url ? ' <span class="rlink" data-ja="open">源</span>' : '') + '</div>' +
+      '<div class="cm">' + (j.questions ? j.questions.length : 0) + ' 题 · ' + esc((j.summary || "").slice(0, 40)) + '</div></div>' +
+      '<select class="inp jf-move" data-move="' + j.id + '" style="width:110px;height:28px;font-size:12px;flex:none">' + selOpts + '</select>' +
+      '<span class="rlink" data-ja="fav">' + (j.is_fav ? "取消收藏" : "收藏") + '</span>' +
+      '<span class="rlink" data-ja="detail">详情</span>' +
+      '<span class="rdel" data-ja="del">删除</span>' +
+    '</div>' +
+    '<div class="jm-detail" data-did="' + j.id + '" hidden style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 8px;font-size:13px;white-space:pre-wrap"></div>';
+  }).join("") || '<div style="color:#8f959e;font-size:13px;padding:20px 0">这里还没有面经。<br>点右上角「＋ 添加面经」粘贴小红书分享链接或正文；或从「📋 表格」某岗位的 📚 入口进入。</div>';
+}
+
+$("jfList").addEventListener("click", async e => {
+  const el = e.target;
+  if(el.dataset.fdel){
+    const fid = +el.dataset.fdel;
+    if(!confirm("删除文件夹？（里面的面经会移到「未分类」）")) return;
+    try{ await api("/api/jing/folders/" + fid, {method:"DELETE"}); await loadJings(); }catch(err){ alert(err.message); }
+    return;
+  }
+  const item = el.closest(".jf-item"); if(!item) return;
+  jgCurFolder = +item.dataset.f;
+  renderJf();
+  renderJgList();
+});
+
+$("jfNew").addEventListener("click", async () => {
+  const name = prompt("文件夹名称（如：字节跳动 / 产品岗）：");
+  if(!name || !name.trim()) return;
+  try{ await api("/api/jing/folders", {method:"POST", body: JSON.stringify({name: name.trim()})}); await loadJings(); }catch(e){ alert(e.message); }
+});
+
+let jgSearchT;
+$("jgQ").addEventListener("input", () => {
+  clearTimeout(jgSearchT);
+  jgSearchT = setTimeout(() => { jgQ = $("jgQ").value.trim(); renderJgList(); }, 400);
+});
+
+$("jgAdd").addEventListener("click", () => openJingGlobal(jgCurFolder));
+
+function openJingGlobal(folderId){
+  jmFrom = "lib";
+  jmCompany = "";
+  $("jmTitle").textContent = "面经库 · 添加面经";
+  $("jmCompany").value = "";
+  $("jmUrl").value = ""; $("jmText").value = ""; $("jmTitleI").value = ""; $("jmPreview").value = "";
+  jmParsed = null;
+  $("jmGo").hidden = true;
+  fillJmFolder(folderId || 0);
+  loadJmJings();
+  $("jingModal").hidden = false;
+}
+
+function fillJmFolder(sel){
+  const opts = '<option value="0">未分类</option>' + jgFolders.map(f => '<option value="' + f.id + '">' + esc(f.name) + '</option>').join("");
+  $("jmFolder").innerHTML = opts;
+  $("jmFolder").value = String(sel);
+  $("jmBatchFolder").innerHTML = opts;
+  $("jmBatchFolder").value = String(sel);
+}
+
+$("jgList").addEventListener("click", async e => {
+  const el = e.target;
+  const row = el.closest(".evcase"); if(!row) return;
+  const jid = +row.dataset.jid;
+  const j = jgList.find(x => x.id === jid); if(!j) return;
+  const detailDiv = document.querySelector('.jm-detail[data-did="' + jid + '"]');
+  if(el.dataset.ja === "fav"){
+    try{ await api("/api/jings/" + jid, {method:"PUT", body: JSON.stringify({is_fav: !j.is_fav})}); renderJgList(); }catch(err){ alert(err.message); }
+  } else if(el.dataset.ja === "del"){
+    if(!confirm("删除这条面经？")) return;
+    try{ await api("/api/jings/" + jid, {method:"DELETE"}); await loadJings(); }catch(err){ alert(err.message); }
+  } else if(el.dataset.ja === "open"){
+    if(j.source_url) window.open(j.source_url, "_blank");
+  } else if(el.dataset.ja === "detail"){
+    const qs = (j.questions || []).map((q, i) => (i + 1) + ". " + q).join("\n");
+    detailDiv.textContent = (j.summary ? "【要点】" + j.summary + "\n\n" : "") + (qs ? "【问题清单】\n" + qs : "（无问题记录）") + (j.content ? "\n\n【原文】\n" + j.content.slice(0, 800) : "");
+    detailDiv.hidden = !detailDiv.hidden;
+  }
+});
+
+$("jgList").addEventListener("change", async e => {
+  const el = e.target;
+  if(!el.classList.contains("jf-move")) return;
+  const jid = +el.dataset.move;
+  try{ await api("/api/jings/" + jid, {method:"PUT", body: JSON.stringify({folder_id: +el.value})}); await loadJings(); }catch(err){ alert(err.message); }
+});
+
+async function loadMonitor(){
+  try{
+    const s = await api("/api/monitor/summary");
+    const llm = s.llm_ok ? '<span style="color:#2ea64f">✓ 正常</span>' : '<span style="color:#e5484d">✗ ' + esc(s.llm_err) + '</span>';
+    const fs = !s.feishu_configured ? '<span style="color:#8f959e">未配置</span>' : (s.feishu_ok ? '<span style="color:#2ea64f">✓ 正常</span>' : '<span style="color:#d97a00">✗ 取 token 失败</span>');
+    $("moStatus").innerHTML =
+      '模型：<b>' + esc(s.model) + '</b> · 连通性 ' + llm + ' · 飞书 ' + fs + '<br>' +
+      'LLM 调用 <b>' + s.total_calls + '</b> 次 · 总耗时 <b>' + s.total_latency + 's</b> · 平均 <b>' + s.avg_latency + 's</b> · 错误 <b style="color:' + (s.error_count ? "#e5484d" : "#2ea64f") + '">' + s.error_count + '</b><br>' +
+      '数据：岗位 <b>' + s.jobs_count + '</b> · 面经 <b>' + s.jings_count + '</b> · 文件夹 <b>' + s.folders_count + '</b> · 缓存 <b>' + s.cache_count + '</b> · DB ' + (s.db_size / 1024).toFixed(1) + ' KB';
+    $("moTable").innerHTML = (s.modules || []).map(m =>
+      '<tr><td>' + esc(m.kind) + '</td><td>' + m.calls + '</td><td>' + m.avg_latency + 's</td><td>' + m.total_latency + 's</td><td>' + m.in_chars + '</td><td>' + m.out_chars + '</td></tr>'
+    ).join("") || '<tr><td colspan="6" style="color:#8f959e">暂无</td></tr>';
+    $("moLog").innerHTML = (s.recent_log || []).map(l =>
+      '<div style="padding:5px 0;border-bottom:1px solid #f0f1f3;color:' + (l.level === "error" ? "#e5484d" : "var(--sub)") + '"><b>' + esc(l.module) + '</b> [' + esc(l.level) + '] · ' + esc((l.created_at || "").slice(5, 19)) + '<br>' + esc(l.message) + '</div>'
+    ).join("") || '<div style="color:#8f959e">暂无日志</div>';
+  }catch(e){}
+}
+$("moRefresh").addEventListener("click", loadMonitor);
+
+const AVATARS = [
+  "https://randomuser.me/api/portraits/men/32.jpg",
+  "https://randomuser.me/api/portraits/women/44.jpg",
+  "https://randomuser.me/api/portraits/men/45.jpg",
+  "https://randomuser.me/api/portraits/women/68.jpg",
+  "https://randomuser.me/api/portraits/men/76.jpg",
+  "https://randomuser.me/api/portraits/women/22.jpg",
+  "https://randomuser.me/api/portraits/men/11.jpg",
+  "https://randomuser.me/api/portraits/women/33.jpg"
+];
+let ivAvatar = "";
+let ivStream = null;
+let ivRec = null;
+
+function pickRandomAvatar(){
+  ivAvatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+  $("ivAvPreview").src = ivAvatar;
+}
+pickRandomAvatar();
+
+document.querySelectorAll('input[name="ivAv"]').forEach(r => {
+  r.addEventListener("change", () => {
+    const v = document.querySelector('input[name="ivAv"]:checked').value;
+    $("ivAvBtn").hidden = v !== "upload";
+    if(v === "random"){ $("ivAvBtn").textContent = "选择 jpg"; pickRandomAvatar(); }
+  });
+});
+
+$("ivAvBtn").addEventListener("click", () => $("ivAvFile").click());
+$("ivAvFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; if(!f) return;
+  const fd = new FormData(); fd.append("file", f);
+  $("ivAvBtn").textContent = "上传中…";
+  try{
+    const r = await fetch("/api/avatar/upload", {method:"POST", body: fd});
+    if(!r.ok){ const d = await r.json().catch(()=>({})); throw new Error(d.detail || r.statusText); }
+    const d = await r.json();
+    ivAvatar = d.url;
+    $("ivAvPreview").src = ivAvatar;
+  }catch(err){ alert("上传失败：" + err.message); }
+  $("ivAvFile").value = "";
+  $("ivAvBtn").textContent = "选择 jpg";
+});
+
+$("ivAvRand").addEventListener("click", () => {
+  const r0 = document.querySelector('input[name="ivAv"][value="random"]');
+  if(r0) r0.checked = true;
+  $("ivAvBtn").hidden = true;
+  pickRandomAvatar();
+});
+
+function startCamera(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  navigator.mediaDevices.getUserMedia({video: true, audio: false}).then(s => {
+    ivStream = s;
+    $("ivUserCam").srcObject = s;
+    $("ivCamOff").style.display = "none";
+  }).catch(() => { $("ivCamOff").style.display = "flex"; $("ivCamOff").textContent = "摄像头不可用"; });
+}
+function stopCamera(){
+  if(ivStream){ ivStream.getTracks().forEach(t => t.stop()); ivStream = null; }
+}
+
+$("ivMic").addEventListener("click", () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ alert("当前浏览器不支持语音识别，请用 Chrome/Edge"); return; }
+  if(ivRec){ ivRec.stop(); return; }
+  const rec = new SR();
+  rec.lang = "zh-CN";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  rec.onresult = e => {
+    const t = Array.from(e.results).map(r => r[0].transcript).join("");
+    $("ivInput").value = ($("ivInput").value ? $("ivInput").value + "\n" : "") + t;
+  };
+  rec.onend = () => { ivRec = null; $("ivMic").textContent = "🎤"; };
+  rec.onerror = e => { ivRec = null; $("ivMic").textContent = "🎤"; if(e.error !== "aborted") alert("语音识别失败：" + e.error); };
+  ivRec = rec;
+  $("ivMic").textContent = "🎤🔴";
+  rec.start();
+});
+
+// ============ 经历库 & JD 定向改写 ============
+let exps = [];
+let rwJob = null;
+let rwResume = null;
+let rwResumeEn = null;
+
+async function loadExps(){
+  try{ exps = await api("/api/exp_items"); renderExpList(); }
+  catch(e){ console.error(e); }
+}
+
+function renderExpList(){
+  $("expList").innerHTML = exps.map(x =>
+    '<div class="exp-item" data-id="' + x.id + '">' +
+      '<div class="et"><span class="exp-badge">' + (x.type === "项目" ? "项目" : "实习") + '</span>' + esc(x.company || "?") + ' · ' + esc(x.title || "?") + '</div>' +
+      (x.role || x.time_range ? '<div class="es">' + esc([x.role, x.time_range].filter(Boolean).join(" · ")) + '</div>' : '') +
+      (x.content ? '<div class="es" style="margin-top:4px;color:#5b6168">' + esc(x.content.slice(0, 40) + (x.content.length > 40 ? "…" : "")) + '</div>' : '') +
+      '<div class="ea"><span class="ed" data-xa="edit">编辑</span><span class="del" data-xa="del">删除</span></div>' +
+    '</div>').join("") || '<div class="exp-empty">暂无经历，点「＋ 新增」添加实习/项目素材</div>';
+}
+
+function openExpForm(x){
+  x = x || {};
+  $("exType").value = x.type || "实习";
+  $("exCompany").value = x.company || "";
+  $("exTitle").value = x.title || "";
+  $("exRole").value = x.role || "";
+  $("exTime").value = x.time_range || "";
+  $("exContent").value = x.content || "";
+  $("expForm").hidden = false;
+  $("expForm").dataset.id = x.id || "";
+  $("expAdd").textContent = x.id ? "编辑中" : "＋ 新增";
+  $("exCancel").hidden = !x.id;
+}
+
+async function saveExpForm(){
+  const payload = {
+    type: $("exType").value, company: $("exCompany").value.trim(), title: $("exTitle").value.trim(),
+    role: $("exRole").value.trim(), time_range: $("exTime").value.trim(), content: $("exContent").value.trim()
+  };
+  const id = $("expForm").dataset.id;
+  try{
+    if(id){ await api("/api/exp_items/" + id, {method:"PUT", body: JSON.stringify(payload)}); }
+    else{ await api("/api/exp_items", {method:"POST", body: JSON.stringify(payload)}); }
+    $("expForm").hidden = true;
+    $("expForm").dataset.id = "";
+    $("expAdd").textContent = "＋ 新增";
+    loadExps();
+  }catch(e){ alert("保存失败：" + e.message); }
+}
+
+$("expAdd").addEventListener("click", () => openExpForm({}));
+$("exSave").addEventListener("click", saveExpForm);
+$("exCancel").addEventListener("click", () => { $("expForm").hidden = true; $("expForm").dataset.id = ""; $("expAdd").textContent = "＋ 新增"; });
+$("expToggle").addEventListener("click", () => { $("expSide").hidden = !$("expSide").hidden; });
+$("expList").addEventListener("click", async e => {
+  const item = e.target.closest(".exp-item"); if(!item) return;
+  const x = exps.find(v => v.id === +item.dataset.id); if(!x) return;
+  if(e.target.dataset.xa === "edit"){ openExpForm(x); }
+  else if(e.target.dataset.xa === "del"){
+    if(!confirm("删除「" + (x.company || "?") + " · " + (x.title || "?") + "」？")) return;
+    try{ await api("/api/exp_items/" + x.id, {method:"DELETE"}); loadExps(); }catch(err){ alert(err.message); }
+  }
+});
+
+let rwEval = null;
+let rwBasic = null;
+
+async function openRewrite(job){
+  rwJob = job;
+  rwResume = null; rwResumeEn = null; rwEval = null; rwBasic = null;
+  $("rwTitle").textContent = (job.company || "?") + " · " + (job.title || "?") + " · 评估与改写";
+  $("rwResult").hidden = true;
+  $("rwEnBox").hidden = true;
+  $("rwMatch").hidden = false;
+  $("rwEval").hidden = true;
+  $("rwHint").textContent = "正在评估简历与岗位匹配度…";
+  $("rwCands").innerHTML = "";
+  $("rewriteModal").hidden = false;
+  await runEval();
+}
+
+async function runEval(){
+  $("rwGen").disabled = true;
+  $("rwHint").textContent = "正在评估（解析 JD + 简历 → 否决判定 → 分层评分）…约 10-25s";
+  try{
+    const d = await api("/api/resume/evaluate", {method:"POST", body: JSON.stringify({job_id: rwJob.id})});
+    rwEval = d.evaluation || {};
+    rwBasic = d.basic_info || {};
+    renderEval(rwEval);
+    renderCands(d.candidates || []);
+    $("rwHint").textContent = d.note ? "已评估。" + d.note + " 可勾选经历生成改写简历：" : "已按 JD 评估完成，勾选 2-3 条经历生成改写简历（可手动调整）：";
+  }catch(e){ $("rwHint").textContent = "评估失败：" + e.message; $("rwEval").hidden = true; }
+  $("rwGen").disabled = false;
+}
+
+function renderEval(ev){
+  if(!ev || (ev.final_score == null && !ev.recommendation)){
+    $("rwEval").hidden = true;
+    return;
+  }
+  const score = ev.final_score != null ? ev.final_score : (ev.raw_score || 0);
+  const rec = ev.recommendation || "待定";
+  const recColor = rec === "推荐" ? "#2ea64f" : (rec === "不推荐" ? "#e5484d" : "#d97a00");
+  $("rwEScore").textContent = score;
+  $("rwEScore").style.color = score >= 75 ? "#2ea64f" : (score >= 55 ? "#d97a00" : "#e5484d");
+  $("rwERec").innerHTML = "结论：<b style='color:" + recColor + "'>" + esc(rec) + "</b>" + (ev.veto_triggered ? "（触发否决项，改写仅优化格式）" : "");
+  const vd = ev.veto_details || [];
+  const failed = vd.filter(v => !v.passed);
+  if(ev.veto_triggered && failed.length){
+    $("rwEVeto").hidden = false;
+    $("rwEVeto").innerHTML = "⚠ 前置否决项未满足：<br>" + failed.map(v => "· " + esc(v.item || "条件") + "：JD 要求「" + esc(v.jd_requirement || "") + "」，简历为「" + esc(v.candidate_status || "") + "」").join("<br>");
+  } else {
+    $("rwEVeto").hidden = true;
+  }
+  const dims = ev.dimension_scores || {};
+  const rows = [];
+  if(dims.skill_match && dims.skill_match.score != null) rows.push(["技能匹配", dims.skill_match.score]);
+  if(dims.experience_match && dims.experience_match.score != null) rows.push(["经历匹配", dims.experience_match.score]);
+  if(dims.potential_score != null) rows.push(["潜力加分", dims.potential_score]);
+  if(dims.format_score != null) rows.push(["格式可读性", dims.format_score]);
+  $("rwEDims").innerHTML = rows.map(function(x){
+    const v = x[1], col = v >= 75 ? "#2ea64f" : (v >= 55 ? "#d97a00" : "#e5484d");
+    return '<div style="display:flex;align-items:center;gap:10px;font-size:12px;margin:3px 0"><span style="width:76px;flex:none">' + x[0] + '</span>' +
+      '<div style="flex:1;height:8px;background:#eef0f3;border-radius:4px;overflow:hidden"><div style="width:' + Math.min(100, v) + '%;height:100%;background:' + col + '"></div></div>' +
+      '<span style="width:36px;text-align:right">' + v + '</span></div>';
+  }).join("");
+  const evArr = ev.evidence_chain || [];
+  $("rwEEvidence").innerHTML = evArr.length ? '<h4 style="margin:8px 0 4px;font-size:13px;color:var(--sub)">📌 证据链</h4><ul class="mlist ok">' + evArr.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul>' : "";
+  const wk = ev.weaknesses || [];
+  $("rwEWeak").innerHTML = wk.length ? '<h4 style="margin:8px 0 4px;font-size:13px;color:var(--sub)">⚠ 弱点</h4><ul class="mlist gap">' + wk.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul>' : "";
+  const sg = ev.suggestions || [];
+  $("rwESugg").innerHTML = sg.length ? '<h4 style="margin:8px 0 4px;font-size:13px;color:var(--sub)">› 建议</h4><ul class="mlist tip">' + sg.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul>' : "";
+  $("rwEval").hidden = false;
+}
+
+function renderCands(cands){
+  $("rwCands").innerHTML = cands.map(c =>
+    '<div class="rw-cand" data-id="' + c.id + '">' +
+      '<input type="checkbox" data-rid="' + c.id + '"' + (c.selected ? " checked" : "") + '>' +
+      '<div class="rc-main">' +
+        '<div class="rc-t"><span class="exp-badge">' + (c.type === "项目" ? "项目" : "实习") + '</span>' + esc(c.company || "?") + ' · ' + esc(c.title || "?") + '</div>' +
+        '<div class="rc-s">' + esc([c.role, c.time_range].filter(Boolean).join(" · ")) + '</div>' +
+        (c.reason ? '<div class="rc-r">' + esc(c.reason) + '</div>' : '') +
+      '</div>' +
+      '<span class="rw-score">' + c.rule_score + '分</span>' +
+    '</div>').join("") || '<div style="color:#8f959e;font-size:13px;padding:8px 0">暂无经历可选，可基于简历原文生成</div>';
+  updateRwCount();
+}
+
+function selectedExpIds(){
+  return Array.from(document.querySelectorAll("#rwCands input[type=checkbox]:checked")).map(c => +c.dataset.rid);
+}
+
+function updateRwCount(){
+  $("rwCount").textContent = "已选 " + selectedExpIds().length + " 条（建议 2-3 条）";
+}
+
+$("rwCands").addEventListener("change", updateRwCount);
+$("rwRematch").addEventListener("click", runEval);
+
+$("rwGen").addEventListener("click", async () => {
+  const ids = selectedExpIds();
+  $("rwGen").disabled = true;
+  $("rwGen").textContent = "改写中…";
+  try{
+    const d = await api("/api/resume/rewrite_v2", {method:"POST", body: JSON.stringify({job_id: rwJob.id, exp_ids: ids, evaluation: rwEval, basic_info: rwBasic})});
+    rwResume = d.resume; rwResumeEn = null;
+    const ch = (d.resume.changes || []);
+    $("rwChanges").innerHTML = "✍️ 针对该岗位的关键调整：" + (ch.length ? ch.map(x => "· " + esc(x)).join("<br>") : "（无）");
+    $("rwMd").textContent = d.resume_md;
+    $("rwEnBox").hidden = true;
+    $("rwMatch").hidden = true;
+    $("rwResult").hidden = false;
+  }catch(e){ alert("改写失败：" + e.message); }
+  $("rwGen").disabled = false;
+  $("rwGen").textContent = "✍️ 生成改写简历";
+});
+
+$("rwBack").addEventListener("click", () => { $("rwResult").hidden = true; $("rwMatch").hidden = false; });
+
+async function downloadResumePdf(payload){
+  const r = await fetch("/api/resume/pdf", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+  if(!r.ok){ let msg = r.statusText; try{ const d = await r.json(); msg = d.detail || msg; }catch(e){} throw new Error(msg); }
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = payload.lang === "en" ? "Resume_EN.pdf" : "定制简历.pdf";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("rwPdf").addEventListener("click", async () => {
+  if(!rwResume) return;
+  try{ await downloadResumePdf({resume: rwResume, lang: "zh"}); }catch(e){ alert("PDF 生成失败：" + e.message); }
+});
+$("rwPdfEn").addEventListener("click", async () => {
+  if(!rwResumeEn) return;
+  try{ await downloadResumePdf({resume: rwResumeEn, lang: "en"}); }catch(e){ alert("PDF 生成失败：" + e.message); }
+});
+
+$("rwEn").addEventListener("click", async () => {
+  if(!rwResume) return;
+  if(rwResumeEn){ $("rwEnBox").hidden = false; return; }
+  $("rwEn").disabled = true;
+  $("rwEn").textContent = "翻译中…";
+  try{
+    const d = await api("/api/resume/translate", {method:"POST", body: JSON.stringify({resume: rwResume})});
+    rwResumeEn = d.resume_en;
+    $("rwMdEn").textContent = d.resume_en_md;
+    $("rwEnBox").hidden = false;
+  }catch(e){ alert("翻译失败：" + e.message); }
+  $("rwEn").disabled = false;
+  $("rwEn").textContent = "🌐 翻译成英文";
+});
+
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }catch(e){
+    const ta = document.createElement("textarea");
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); return true; }catch(err){ return false; }
+    finally{ ta.remove(); }
+  }
+}
+
+$("rwCopy").addEventListener("click", async () => { if(await copyText($("rwMd").textContent)) alert("已复制中文简历"); });
+$("rwCopyEn").addEventListener("click", async () => { if(await copyText($("rwMdEn").textContent)) alert("已复制英文简历"); });
+
+$("rwSave").addEventListener("click", async () => {
+  const md = $("rwMdEdit").hidden ? $("rwMd").textContent : $("rwMdEdit").value;
+  const name = (rwJob.company || "岗位") + "-" + (rwJob.title || "") + "-定制版";
+  try{
+    await api("/api/resumes", {method:"POST", body: JSON.stringify({name: name, content: md, is_active: false})});
+    alert("已另存为简历版本：\n" + name + "\n可在「📄 简历」中查看/启用");
+    loadResumes();
+  }catch(e){ alert("保存失败：" + e.message); }
+});
+
+$("rwEdit").addEventListener("click", () => {
+  $("rwMdEdit").value = $("rwMd").textContent;
+  $("rwMd").hidden = true;
+  $("rwMdEdit").hidden = false;
+  $("rwEditRow").style.display = "none";
+  $("rwEditRow2").style.display = "flex";
+});
+$("rwEditCancel").addEventListener("click", () => {
+  $("rwMd").hidden = false;
+  $("rwMdEdit").hidden = true;
+  $("rwEditRow").style.display = "flex";
+  $("rwEditRow2").style.display = "none";
+});
+$("rwEditSave").addEventListener("click", async () => {
+  $("rwEditSave").disabled = true;
+  $("rwEditSave").textContent = "解析中…";
+  try{
+    const d = await api("/api/resume/md_to_structure", {method:"POST", body: JSON.stringify({content: $("rwMdEdit").value})});
+    rwResume = d.resume; rwResumeEn = null;
+    $("rwMd").textContent = d.resume_md;
+    $("rwEnBox").hidden = true;
+    $("rwMd").hidden = false;
+    $("rwMdEdit").hidden = true;
+    $("rwEditRow").style.display = "flex";
+    $("rwEditRow2").style.display = "none";
+    alert("已保存修改，PDF / 翻译 / 另存将基于修改后的内容");
+  }catch(e){ alert("保存失败：" + e.message); }
+  $("rwEditSave").disabled = false;
+  $("rwEditSave").textContent = "💾 保存修改";
+});
+
+$("rwEditPolish").addEventListener("click", async () => {
+  $("rwEditPolish").disabled = true;
+  $("rwEditPolish").textContent = "润色中…";
+  try{
+    const parsed = await api("/api/resume/md_to_structure", {method:"POST", body: JSON.stringify({content: $("rwMdEdit").value})});
+    const pol = await api("/api/resume/polish", {method:"POST", body: JSON.stringify({resume: parsed.resume, job_title: rwJob ? rwJob.title : ""})});
+    rwResume = pol.resume; rwResumeEn = null;
+    $("rwMdEdit").value = pol.resume_md;
+    alert("已润色（基于编辑内容），可继续修改或点「保存修改」");
+  }catch(e){ alert("润色失败：" + e.message); }
+  $("rwEditPolish").disabled = false;
+  $("rwEditPolish").textContent = "✨ 润色（基于编辑内容）";
+});
+
+$("rwPolish").addEventListener("click", async () => {
+  if(!rwResume) return;
+  $("rwPolish").disabled = true;
+  $("rwPolish").textContent = "润色中…";
+  try{
+    const d = await api("/api/resume/polish", {method:"POST", body: JSON.stringify({resume: rwResume, job_title: rwJob ? rwJob.title : ""})});
+    rwResume = d.resume; rwResumeEn = null;
+    $("rwMd").textContent = d.resume_md;
+    $("rwEnBox").hidden = true;
+    alert("已润色完成");
+  }catch(e){ alert("润色失败：" + e.message); }
+  $("rwPolish").disabled = false;
+  $("rwPolish").textContent = "✨ AI 润色";
+});
+
+$("trSave").addEventListener("click", async () => {
+  try{
+    await api("/api/translate/config", {method:"POST", body: JSON.stringify({provider: $("trProvider").value, deepl_key: $("trDeeplKey").value.trim()})});
+    $("trStatus").textContent = "✓ 已保存";
+    $("trStatus").style.color = "#2ea64f";
+    setTimeout(() => { $("trStatus").textContent = ""; }, 2000);
+  }catch(e){ alert(e.message); }
+});
+
+addMsg("bot", "👋 欢迎使用 OfferCopilot\n\n把岗位 JD 全文粘贴到下方发送，我会自动提取公司 / 岗位 / Base 地 / 要求 / 截止时间，确认后自动入表。\n在「📋 表格」补充投递进度；「📄 简历」贴入简历后可一键算匹配度；「🎤 面试」可进行 JD 定制模拟面试并生成评估报告；「📚 面经库」可把小红书等平台的面经归档到文件夹；「🩺 运行」查看各模块运行状态。");
+loadJobs();
+loadResumes();
+loadStages();
+</script>
+</body>
+</html>

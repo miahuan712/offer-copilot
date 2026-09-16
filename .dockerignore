@@ -1,0 +1,10 @@
+.env
+*.db
+__pycache__/
+*.pyc
+workbench.log
+data/
+.git/
+.gitignore
+Dockerfile
+docker-compose.yml

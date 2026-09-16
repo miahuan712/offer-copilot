@@ -1,0 +1,13 @@
+services:
+  offer-copilot:
+    build: .
+    container_name: offer-copilot
+    ports:
+      - "8500:8500"
+    environment:
+      - OC_DB=/app/data/jobs.db
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    restart: unless-stopped

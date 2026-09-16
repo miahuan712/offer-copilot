@@ -1,0 +1,33 @@
+# ===== 环境与密钥（切勿提交）=====
+.env
+.env.local
+.env.*.local
+
+# ===== 本地数据库（含岗位/简历/面经等私人数据）=====
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# ===== 运行时产物 =====
+__pycache__/
+*.py[cod]
+*.log
+*.log.err
+workbench.log*
+
+# ===== 用户上传的私人文件（证件照/头像）=====
+static/photo.jpg
+static/avatars/
+xhs_cache/
+
+# ===== 虚拟环境 =====
+.venv/
+venv/
+env/
+
+# ===== 系统 / IDE =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

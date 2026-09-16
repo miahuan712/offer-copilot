@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Python check
+        run: |
+          python -m py_compile app.py feishu.py xhs.py resume_pdf.py
+          python -c "import app"
+
+      - name: JS check
+        run: |
+          python -c "import re,pathlib;h=pathlib.Path('static/index.html').read_text(encoding='utf-8');s=re.search(r'<script>(.*?)</script>',h,re.S).group(1);pathlib.Path('/tmp/check.js').write_text(s,encoding='utf-8')"
+          node --check /tmp/check.js

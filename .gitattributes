@@ -1,0 +1,8 @@
+# 统一换行符，避免跨平台差异
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary

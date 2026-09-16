@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+requests
+pydantic
+python-multipart
+pypdf
+python-docx
+reportlab
+pillow
+playwright
