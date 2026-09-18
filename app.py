@@ -630,7 +630,7 @@ def _llm_json(system, user, history=None, override=None, use_cache=True, kind="l
                     "temperature": 0.1,
                 },
                 headers=_llm_headers(cfg),
-                timeout=90,
+                timeout=240,
             )
             d = r.json()
             if r.status_code != 200 or "choices" not in d:
@@ -680,7 +680,7 @@ def _llm_text(system, user, override=None, use_cache=True, kind="llm"):
                     "temperature": 0.4,
                 },
                 headers=_llm_headers(cfg),
-                timeout=90,
+                timeout=240,
             )
             d = r.json()
             if r.status_code != 200 or "choices" not in d:
@@ -3013,7 +3013,7 @@ def _vision_cfg():
     return {"base": base.rstrip("/"), "key": key, "model": model}
 
 
-def _llm_vision(system, user, images, timeout=120):
+def _llm_vision(system, user, images, timeout=180):
     cfg = _vision_cfg()
     if not cfg["key"]:
         raise RuntimeError("未配置视觉模型 Key")
