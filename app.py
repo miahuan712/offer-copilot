@@ -838,6 +838,7 @@ REPORT_PROMPT = (
     "3. 简历对比：仅当简历已提供时对照简历；只指出简历与转写确实矛盾的地方；候选人在转写中已说明的实现方式、细节与简历一致即视为一致，不得误判为\"与简历不符\"\n"
     "4. 打分公正：基于转写中的实际表现证据综合评分；对表述清楚但可进一步展开的内容给予正常分数而非判缺失；个别小疏漏不应大幅拉低总分；overall 反映整体水平而非单点\n"
     "5. 岗位匹配以 JD 要求为参照，缺依据时不强行扣分\n"
+    "6. 禁止以毕业年份、年龄、工作年限作为待改进项或减分理由（校招面向应届及毕业 1-2 年候选人，应届身份属正常符合）\n"
     "严格只输出 JSON（不要 markdown、不要多余文字）：\n"
     "overall: 综合得分 0-100 整数\n"
     "dimensions: 对象，键为 专业深度/表达与结构/岗位匹配/思考深度，值 0-100 整数\n"
@@ -2394,7 +2395,9 @@ EVAL_PROMPT = (
     "must_have_skills[{skill,category,evidence_hint}]；nice_to_have_skills；experience_requirements[{type,level,content}]；achievement_keywords；responsibility_keywords。\n"
     "2) 简历解析：合并简历与补充经历，提取 basic_info(education_level/school/major/graduation_year/gpa) 与 experiences 列表"
     "（每条含 id/type/company_or_project/duration/role/responsibilities/tech_stack/achievements/source）。\n"
-    "3) 否决判定：仅对 JD 中**明确强制**的条件做否决（如学历、专业、毕业年份、明确要求且必须提供的证书、其他\"必须\"条件）。"
+    "3) 否决判定：仅对 JD 中**明确强制**的条件做否决（如学历、专业、明确要求且必须提供的证书、其他\"必须\"条件）。"
+    "毕业年份仅当候选人**明确超出校招范围**（如多年前已毕业且非目标届）时才可能触发否决；"
+    "校招面向应届及毕业 1-2 年的候选人，应届身份（如 2027 届）属正常符合，不得否决、不得列为弱点。"
     "注意：① 语言类要求做**等价换算**——雅思 6.5 及以上 ≥ CET-6、雅思 6.0 ≥ CET-4，托福/专四专八/六级等任意更高或等价证明均视为满足，"
     "不得因简历未写\"CET\"字样而否决英语要求；"
     "② 简历未提及某项条件时标记为\"信息不足\"并视为通过（passed=true），不触发否决；"
@@ -2417,7 +2420,8 @@ EVAL_PROMPT = (
     "     \"potential_score\":0,\"format_score\":0},\n"
     "   \"evidence_chain\":[],\"weaknesses\":[],\"suggestions\":[]},\n"
     " \"recommended_exp_ids\":[]}\n"
-    "约束：事实优先禁止编造；评分必须有证据；同一问题不重复扣分；信息不足输出\"信息不足，建议用户补充\"。"
+    "约束：事实优先禁止编造；评分必须有证据；同一问题不重复扣分；信息不足输出\"信息不足，建议用户补充\"；"
+    "禁止将毕业年份、年龄、工作年限列为弱点或减分项（校招面向应届及毕业 1-2 年候选人，应届身份属正常符合）。"
 )
 
 
