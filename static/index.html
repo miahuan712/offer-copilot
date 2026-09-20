@@ -426,6 +426,16 @@ select.inp{height:36px}
   </div>
 </div>
 
+<div class="modal" id="ivReportLoading" hidden>
+  <div class="modal-box" style="width:min(320px,90vw)">
+    <div class="modal-body" style="text-align:center;padding:24px 20px">
+      <div style="font-size:30px;margin-bottom:10px">⏳</div>
+      <div style="font-weight:600;margin-bottom:4px">正在生成面试报告</div>
+      <div style="font-size:12px;color:var(--sub)">请稍候，约 1 分钟… 生成完会自动弹出</div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="reportModal" hidden>
   <div class="modal-box" style="width:min(720px,94vw)">
     <div class="modal-head"><b id="rpTitle"></b><button class="mclose">✕</button></div>
@@ -643,8 +653,8 @@ select.inp{height:36px}
       </div>
     </div>
     <div class="iv-card">
-      <h3>⚖️ 辅助模型（评估/改写/翻译）</h3>
-      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">「✏️ 评估与改写」和「🌐 翻译」用更快/更省的模型加速（opencode Go 下默认 deepseek-v4-flash，避免慢模型超时）。留空自动。</p>
+      <h3>⚖️ 辅助模型（评估/改写/翻译/面试）</h3>
+      <p style="font-size:12px;color:var(--sub);margin:0 0 10px">「✏️ 评估与改写」「🌐 翻译」和「🎤 面试」用更快/更省的模型加速（opencode Go 下默认 deepseek-v4-flash，避免慢模型超时）。留空自动。</p>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <input id="evModel" class="inp" placeholder="评估模型（如 deepseek-v4-flash）" style="flex:2;min-width:200px">
         <input id="evBase" class="inp" placeholder="Base（默认跟随当前模型）" style="flex:2;min-width:180px">
@@ -1466,6 +1476,7 @@ function doFinishInterview(){
   $("ivFinish").disabled = true;
   $("ivFinish").textContent = "生成中…";
   stopVoice();
+  showReportLoading(true);
   (async () => {
     try{
       const r = await api("/api/interview/" + ivCur.id + "/finish", {method:"POST", body: JSON.stringify({})});
@@ -1474,9 +1485,14 @@ function doFinishInterview(){
       renderIvSession();
       openReport(r.report, ivCur.title);
     }catch(e){ alert(e.message); }
+    showReportLoading(false);
     $("ivFinish").disabled = false;
     $("ivFinish").textContent = "🏁 结束并生成报告";
   })();
+}
+
+function showReportLoading(on){
+  $("ivReportLoading").hidden = !on;
 }
 
 $("ivFinish").addEventListener("click", () => {
@@ -1515,10 +1531,24 @@ $("ivHistory").addEventListener("click", async e => {
   }
   if(el.dataset.ia === "finish"){
     if(!confirm("提交这场面试并生成报告？（会结束面试）")) return;
+    const btn = el;
+    const oldTxt = btn.textContent;
+    btn.textContent = "生成中…";
+    btn.disabled = true;
+    showReportLoading(true);
     try{
-      await api("/api/interview/" + iid + "/finish", {method:"POST", body: JSON.stringify({})});
+      const r = await api("/api/interview/" + iid + "/finish", {method:"POST", body: JSON.stringify({})});
+      if(r.report){
+        const s = await api("/api/interviews/" + iid);
+        openReport(r.report, s.title || "面试报告");
+      }
       loadIv();
-    }catch(err){ alert(err.message); }
+    }catch(err){
+      alert(err.message);
+      btn.textContent = oldTxt;
+      btn.disabled = false;
+    }
+    showReportLoading(false);
     return;
   }
   if(el.dataset.ia === "view"){

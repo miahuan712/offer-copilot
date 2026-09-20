@@ -919,7 +919,7 @@ def interview_start(body: dict):
     jing_qs = _interview_q_context(job["company"], bool(learn))
     style_profile = _interview_style_profile() if learn else ""
     prompt = _iv_system(job, resume_text, persona, itype, round_name, jing_qs, style_profile)
-    d = _llm_json(prompt, "面试开始，请按规则输出首轮（自我介绍开场 + 第一个问题）。", kind="面试")
+    d = _llm_json(prompt, "面试开始，请按规则输出首轮（自我介绍开场 + 第一个问题）。", override=_eval_cfg(), kind="面试")
     try:
         score = int(d.get("score")) if d.get("score") is not None else None
     except Exception:
@@ -971,7 +971,7 @@ def interview_answer(iid: int, body: dict):
             history.append({"role": "user", "content": m.get("content", "")})
         else:
             history.append({"role": "assistant", "content": ((m.get("reply", "") or "") + "\n" + (m.get("question", "") or "")).strip()})
-    d = _llm_json(prompt, "候选人最新回答：\n" + content + "\n\n请输出 JSON（reply + score + feedback + question + kind）。", history, kind="面试")
+    d = _llm_json(prompt, "候选人最新回答：\n" + content + "\n\n请输出 JSON（reply + score + feedback + question + kind）。", history, override=_eval_cfg(), kind="面试")
     kind = str(d.get("kind", "") or "").strip()
     if kind not in ("followup", "new", "end"):
         kind = "new"
@@ -1024,7 +1024,7 @@ def interview_finish(iid: int):
                 line += "（本题评分：%s；反馈：%s）" % (m["score"], m.get("feedback", "") or "")
             lines.append("面试官：" + line)
     transcript = "\n".join(lines)[:8000]
-    d = _llm_json(REPORT_PROMPT + _job_ctx(job), transcript, kind="面试报告")
+    d = _llm_json(REPORT_PROMPT + _job_ctx(job), transcript, override=_eval_cfg(), kind="面试报告")
     overall = _clamp(d.get("overall", 0))
     dims = {}
     for k, v in (d.get("dimensions") or {}).items():
