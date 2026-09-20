@@ -831,13 +831,19 @@ def _iv_system(job, resume_text, persona, itype, round_name, jing_qs, style_prof
 
 
 REPORT_PROMPT = (
-    "你是资深面试评估官，基于岗位信息与完整面试对话生成候选人评估报告。"
+    "你是资深面试评估官，基于岗位信息、候选人简历和完整面试对话，生成客观、准确、公正的候选人评估报告。\n"
+    "评分与评价必须严格遵守以下规则：\n"
+    "1. 只依据面试对话转写中真实存在的内容评价；每条反馈/结论都要能在转写中找到依据，必要时引用转写原文\n"
+    "2. 禁止臆断：不得声称候选人\"没提到/未涉及/没有说\"某内容，除非转写中确实完全没有该内容；不得编造候选人说过的话\n"
+    "3. 简历对比：仅当简历已提供时对照简历；只指出简历与转写确实矛盾的地方；候选人在转写中已说明的实现方式、细节与简历一致即视为一致，不得误判为\"与简历不符\"\n"
+    "4. 打分公正：基于转写中的实际表现证据综合评分；对表述清楚但可进一步展开的内容给予正常分数而非判缺失；个别小疏漏不应大幅拉低总分；overall 反映整体水平而非单点\n"
+    "5. 岗位匹配以 JD 要求为参照，缺依据时不强行扣分\n"
     "严格只输出 JSON（不要 markdown、不要多余文字）：\n"
-    "overall: 综合得分 0-100 整数，打分严格\n"
+    "overall: 综合得分 0-100 整数\n"
     "dimensions: 对象，键为 专业深度/表达与结构/岗位匹配/思考深度，值 0-100 整数\n"
-    "per_q: 数组，每项 {question: 问题摘要, verdict: 好/中/差, feedback: 1-2 句具体反馈}\n"
-    "strengths: 字符串数组 2-4 条亮点\n"
-    "improvements: 字符串数组 2-4 条待改进\n"
+    "per_q: 数组，每项 {question: 问题摘要, verdict: 好/中/差, feedback: 1-2 句具体反馈（须引用转写依据）}\n"
+    "strengths: 字符串数组 2-4 条亮点（须有转写依据）\n"
+    "improvements: 字符串数组 2-4 条待改进（须有转写依据）\n"
     "practice: 字符串数组 1-3 条接下来的练习建议\n"
 )
 
@@ -1024,7 +1030,9 @@ def interview_finish(iid: int):
                 line += "（本题评分：%s；反馈：%s）" % (m["score"], m.get("feedback", "") or "")
             lines.append("面试官：" + line)
     transcript = "\n".join(lines)[:8000]
-    d = _llm_json(REPORT_PROMPT + _job_ctx(job), transcript, override=_eval_cfg(), kind="面试报告")
+    user = (_job_ctx(job) + "\n\n【候选人简历】\n" + (row["resume_text"] or "（未提供简历）") +
+            "\n\n【面试对话转写】\n" + transcript)
+    d = _llm_json(REPORT_PROMPT, user, override=_eval_cfg(), kind="面试报告")
     overall = _clamp(d.get("overall", 0))
     dims = {}
     for k, v in (d.get("dimensions") or {}).items():
