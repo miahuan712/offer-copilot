@@ -401,13 +401,30 @@ select.inp{height:36px}
       </div>
     </div>
     <div id="ivMsgs" style="flex:1;overflow-y:auto;padding:16px 20px"></div>
+    <div id="ivVoiceLive" hidden style="padding:6px 20px 0;font-size:12px;color:var(--blue);min-height:14px;white-space:pre-wrap;word-break:break-all"></div>
     <div class="composer">
-      <textarea id="ivInput" placeholder="输入你的回答…（Enter 发送，Shift+Enter 换行）"></textarea>
+      <textarea id="ivInput" placeholder="输入你的回答…（🎤 可开启连续语音，边录边转，再点一次停止）"></textarea>
       <button class="ghost" id="ivMic" title="语音输入（Chrome/Edge）">🎤</button>
       <button class="primary" id="ivSend">发送</button>
     </div>
   </div>
 </section>
+
+<div class="modal" id="ivEndModal" hidden>
+  <div class="modal-box" style="width:min(400px,92vw)">
+    <div class="modal-head"><b>结束面试</b><button class="mclose">✕</button></div>
+    <div class="modal-body">
+      <p style="margin:0 0 10px">确定要结束这场面试并生成报告吗？</p>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:14px;cursor:pointer">
+        <input type="checkbox" id="ivEndNoConfirm"> 以后不再确认，点结束直接生成报告
+      </label>
+      <div style="display:flex;gap:8px">
+        <button class="primary" id="ivEndSubmit" style="flex:1;padding:8px">提交并生成报告</button>
+        <button class="ghost" id="ivEndCancel" style="flex:1;padding:8px">继续面试</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal" id="reportModal" hidden>
   <div class="modal-box" style="width:min(720px,94vw)">
@@ -1349,8 +1366,9 @@ async function loadIv(){
     $("ivHistory").innerHTML = ivs.map(iv =>
       '<div class="rrow" data-iid="' + iv.id + '">' +
         '<span class="rn">' + esc(iv.title || "模拟面试") + '</span>' +
-        (iv.status === "done" && iv.overall ? '<span class="rtag">' + iv.overall + ' 分</span>' : '<span class="rtag" style="background:#f2f3f5;color:#8f959e">未完成</span>') +
+        (iv.status === "done" && iv.overall ? '<span class="rtag">' + iv.overall + ' 分</span>' : (iv.status === "ing" ? '<span class="rtag" style="background:#fdf0e0;color:#d97a00">进行中</span>' : '<span class="rtag" style="background:#f2f3f5;color:#8f959e">未完成</span>')) +
         '<span style="font-size:12px;color:#8f959e;flex:none">' + esc((iv.created_at || "").slice(5, 16)) + '</span>' +
+        (iv.status === "ing" ? '<span class="rlink" data-ia="finish">提交报告</span>' : '') +
         '<span class="rlink" data-ia="view">查看</span>' +
         '<span class="rdel" data-ia="del">删除</span>' +
       '</div>').join("") || '<div style="color:#8f959e;font-size:13px;padding:6px 0">还没有面试记录</div>';
@@ -1443,24 +1461,41 @@ $("ivInput").addEventListener("keydown", e => {
   if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); ivSendMsg(); }
 });
 
-$("ivFinish").addEventListener("click", async () => {
+function doFinishInterview(){
   if(!ivCur || ivCur.readonly) return;
   $("ivFinish").disabled = true;
   $("ivFinish").textContent = "生成中…";
-  try{
-    const r = await api("/api/interview/" + ivCur.id + "/finish", {method:"POST", body: JSON.stringify({})});
-    ivCur.report = r.report;
-    ivCur.finished = true;
-    renderIvSession();
-    openReport(r.report, ivCur.title);
-  }catch(e){ alert(e.message); }
-  $("ivFinish").disabled = false;
-  $("ivFinish").textContent = "🏁 结束并生成报告";
+  stopVoice();
+  (async () => {
+    try{
+      const r = await api("/api/interview/" + ivCur.id + "/finish", {method:"POST", body: JSON.stringify({})});
+      ivCur.report = r.report;
+      ivCur.finished = true;
+      renderIvSession();
+      openReport(r.report, ivCur.title);
+    }catch(e){ alert(e.message); }
+    $("ivFinish").disabled = false;
+    $("ivFinish").textContent = "🏁 结束并生成报告";
+  })();
+}
+
+$("ivFinish").addEventListener("click", () => {
+  if(!ivCur || ivCur.readonly) return;
+  if(localStorage.getItem("ivNoConfirm") === "1"){ doFinishInterview(); return; }
+  $("ivEndModal").hidden = false;
+});
+$("ivEndSubmit").addEventListener("click", () => {
+  $("ivEndModal").hidden = true;
+  doFinishInterview();
+});
+$("ivEndCancel").addEventListener("click", () => { $("ivEndModal").hidden = true; });
+$("ivEndNoConfirm").addEventListener("change", () => {
+  localStorage.setItem("ivNoConfirm", $("ivEndNoConfirm").checked ? "1" : "0");
 });
 
 $("ivQuit").addEventListener("click", () => {
   stopCamera();
-  if(ivRec){ try{ ivRec.stop(); }catch(e){} ivRec = null; $("ivMic").textContent = "🎤"; }
+  stopVoice();
   showIvSession(false);
   loadIv();
 });
@@ -1476,6 +1511,14 @@ $("ivHistory").addEventListener("click", async e => {
   if(el.dataset.ia === "del"){
     if(!confirm("删除这条面试记录？")) return;
     try{ await api("/api/interviews/" + iid, {method:"DELETE"}); loadIv(); }catch(err){ alert(err.message); }
+    return;
+  }
+  if(el.dataset.ia === "finish"){
+    if(!confirm("提交这场面试并生成报告？（会结束面试）")) return;
+    try{
+      await api("/api/interview/" + iid + "/finish", {method:"POST", body: JSON.stringify({})});
+      loadIv();
+    }catch(err){ alert(err.message); }
     return;
   }
   if(el.dataset.ia === "view"){
@@ -2560,23 +2603,75 @@ function stopCamera(){
   if(ivStream){ ivStream.getTracks().forEach(t => t.stop()); ivStream = null; }
 }
 
-$("ivMic").addEventListener("click", () => {
+let ivVoiceOn = false;
+
+function startVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ alert("当前浏览器不支持语音识别，请用 Chrome/Edge"); return; }
-  if(ivRec){ ivRec.stop(); return; }
+  ivVoiceOn = true;
+  $("ivMic").textContent = "🎤🔴 停止";
+  $("ivMic").style.background = "#fdecec";
   const rec = new SR();
   rec.lang = "zh-CN";
-  rec.interimResults = false;
+  rec.continuous = true;
+  rec.interimResults = true;
   rec.maxAlternatives = 1;
   rec.onresult = e => {
-    const t = Array.from(e.results).map(r => r[0].transcript).join("");
-    $("ivInput").value = ($("ivInput").value ? $("ivInput").value + "\n" : "") + t;
+    let interim = "", final = "";
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){ final += r[0].transcript; } else { interim += r[0].transcript; }
+    }
+    if(interim){ showInterim(interim); }
+    if(final){ appendVoiceFinal(final); }
   };
-  rec.onend = () => { ivRec = null; $("ivMic").textContent = "🎤"; };
-  rec.onerror = e => { ivRec = null; $("ivMic").textContent = "🎤"; if(e.error !== "aborted") alert("语音识别失败：" + e.error); };
+  rec.onend = () => {
+    if(ivVoiceOn){ try{ rec.start(); }catch(err){ stopVoice(); } }
+    else { ivRec = null; }
+  };
+  rec.onerror = e => {
+    if(e.error === "network"){
+      stopVoice();
+      alert("语音服务连接失败，已停止监听。请检查网络后重试。");
+    } else if(e.error !== "no-speech" && e.error !== "aborted"){
+      stopVoice();
+      alert("语音识别失败：" + e.error);
+    }
+  };
   ivRec = rec;
-  $("ivMic").textContent = "🎤🔴";
-  rec.start();
+  try{ rec.start(); }catch(e){ stopVoice(); }
+}
+
+function stopVoice(){
+  ivVoiceOn = false;
+  if(ivRec){ try{ ivRec.stop(); }catch(e){} ivRec = null; }
+  $("ivMic").textContent = "🎤";
+  $("ivMic").style.background = "";
+  clearInterim();
+}
+
+function showInterim(t){
+  const el = $("ivVoiceLive");
+  el.hidden = false;
+  el.textContent = "🎙 正在识别：" + t;
+}
+
+function clearInterim(){
+  const el = $("ivVoiceLive");
+  el.hidden = true;
+  el.textContent = "";
+}
+
+function appendVoiceFinal(t){
+  const ta = $("ivInput");
+  ta.value = (ta.value ? ta.value.replace(/\s+$/, "") + " " : "") + t;
+  ta.focus();
+  ta.scrollTop = ta.scrollHeight;
+}
+
+$("ivMic").addEventListener("click", () => {
+  if(ivRec || ivVoiceOn){ stopVoice(); }
+  else { startVoice(); }
 });
 
 // ============ 经历库 & JD 定向改写 ============
