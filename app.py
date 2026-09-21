@@ -213,6 +213,25 @@ def init_db():
                 "created_at TEXT DEFAULT '')"
             )
             c.execute(
+                "CREATE TABLE IF NOT EXISTS iv_weak ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "company TEXT DEFAULT '',"
+                "question TEXT DEFAULT '',"
+                "hint TEXT DEFAULT '',"
+                "suggested TEXT DEFAULT '',"
+                "score INTEGER DEFAULT 0,"
+                "created_at TEXT DEFAULT '')"
+            )
+            c.execute(
+                "CREATE TABLE IF NOT EXISTS practice ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "job_id INTEGER,"
+                "persona TEXT DEFAULT 'senior',"
+                "messages TEXT DEFAULT '[]',"
+                "created_at TEXT DEFAULT '',"
+                "updated_at TEXT DEFAULT '')"
+            )
+            c.execute(
                 "CREATE TABLE IF NOT EXISTS exp_items ("
                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 "type TEXT DEFAULT '实习',"
@@ -805,7 +824,7 @@ ITYPE_GUIDE = {
 }
 
 
-def _iv_system(job, resume_text, persona, itype, round_name, jing_qs, style_profile=""):
+def _iv_system(job, resume_text, persona, itype, round_name, jing_qs, style_profile="", weak=""):
     p = PERSONAS.get(persona or "senior", PERSONAS["senior"])
     guide = ITYPE_GUIDE.get(itype or "综合面", ITYPE_GUIDE["综合面"])
     rn = round_name or "一面"
@@ -813,20 +832,50 @@ def _iv_system(job, resume_text, persona, itype, round_name, jing_qs, style_prof
         "你是%s，%s。\n"
         "正在对候选人进行【%s】的%s模拟面试。\n"
         "规则：\n"
-        "1. 首轮输出：简短自我介绍开场（你是谁、这场面侧重什么）+ 第一个问题（请候选人做个自我介绍）\n"
-        "2. 之后每轮输出 = 对候选人上一条回答的简短点评(reply) + 本题评分(score 0-100整数，打分严格) + 一句具体反馈(feedback) + 下一个问题(question)\n"
-        "3. 追问要引用候选人回答的原话，深挖 STAR 细节（具体做了什么、量化结果、困难与取舍）\n"
-        "4. 计划 5 个左右主问题，每个主问题最多追问 1 次\n"
-        "5. 全部问完后 kind=end，question 写「我的问题问完了，可以点击结束生成报告」\n"
-        "6. 用中文，语气符合你的人设，一次只问一个问题\n"
-        "严格只输出 JSON：{reply: string, score: int或null, feedback: string, question: string, kind: followup/new/end}\n"
+        "1. 首轮输出：简短自我介绍开场（你是谁、这场面侧重什么）+ 第一个问题（请候选人做个自我介绍）；首轮 score/suggested/hint 留空，kind=new\n"
+        "2. 之后每轮输出 = 对候选人上一条回答的简短点评(reply) + 本题评分(score 0-100整数，打分严格) + 一句具体反馈(feedback) + 参考回答(suggested) + 改进引导(hint) + 下一个问题(question) + 类型(kind)\n"
+        "3. suggested 参考回答：每题都要给出一段可直接学习的完整话术。题目与简历相关（项目/技能/经历）时，必须基于简历中的真实经历组织 STAR 话术并在末尾标注【简历依据：xxx】；简历没有的内容严禁编造；无简历时给通用结构化话术\n"
+        "4. 若候选人本答回答薄弱（细节缺失、答非所问、STAR 不完整、过于笼统），hint 给出 2-3 条针对他这次回答的具体改进点，并设 kind=retry、question 保持上一题不变，引导候选人按提示重答；回答合格时 hint 留空\n"
+        "5. 收到标注「补充回答」的输入时，视为针对上一题重答：先对比上一轮该题的回答指出进步点，再重新评分，然后正常进入下一题\n"
+        "6. 追问要引用候选人回答的原话，深挖 STAR 细节（具体做了什么、量化结果、困难与取舍）\n"
+        "7. 计划 5 个左右主问题，每个主问题最多追问 1 次\n"
+        "8. 全部问完后 kind=end，question 写「我的问题问完了，可以点击结束生成报告」\n"
+        "9. 用中文，语气符合你的人设，一次只问一个问题\n"
+        "严格只输出 JSON：{reply: string, score: int或null, feedback: string, suggested: string, hint: string, question: string, kind: new/followup/retry/end}\n"
     ) % (p["name"], p["style"], rn, guide)
     prompt += "\n\n" + _job_ctx(job)
     prompt += "\n\n【候选人简历】\n" + (resume_text[:6000] or "（未提供简历）")
     if jing_qs:
         prompt += "\n\n【该公司真实/相关面试问题（优先参考，尽量据此出题/追问）】\n" + "\n".join(jing_qs)
+    if weak:
+        prompt += "\n\n【该公司你的历史薄弱题（模拟面试优先复习/出这些题）】\n" + weak
     if style_profile:
         prompt += "\n\n【候选人真实面试风格画像（模拟面试应尽量贴近这种风格）】\n" + style_profile
+    return prompt
+
+
+def _practice_system(job, resume_text, persona, jing_qs, style_profile="", weak=""):
+    p = PERSONAS.get(persona or "senior", PERSONAS["senior"])
+    prompt = (
+        "你是%s，%s。现在是【日常陪练】模式，不是正式面试。\n"
+        "候选人会向你请教某个面试问题怎么回答更好，你要以教练身份帮他把回答打磨到位。\n"
+        "规则：\n"
+        "1. 先点明这个问题考察什么（一句话）\n"
+        "2. 结合候选人简历中的真实经历，给出可直接使用的参考回答话术（STAR 结构：情境/任务/行动/结果，尽量量化），话术末尾标注【简历依据：xxx】\n"
+        "3. 指出常见误区与踩坑点，让候选人避开\n"
+        "4. 若候选人问题与简历不相关或简历信息不足，给出通用但具体的结构化话术，并提示可补充哪些真实素材\n"
+        "5. 回答要具体、可执行、口语化、鼓励式，300 字以内；一次聚焦一个问题\n"
+        "6. 若候选人提问「怎么答更好」之后主动补充了自己的背景/尝试，先肯定其思路再给出更优话术\n"
+        "直接输出回答正文，不要输出 JSON，不要输出评分，不要追问下一题。"
+    ) % (p["name"], p["style"])
+    prompt += "\n\n" + _job_ctx(job)
+    prompt += "\n\n【候选人简历】\n" + (resume_text[:6000] or "（未提供简历）")
+    if jing_qs:
+        prompt += "\n\n【该公司真实/相关面试问题（参考出题风格，回答尽量贴合该公司）】\n" + "\n".join(jing_qs)
+    if weak:
+        prompt += "\n\n【该公司你的历史薄弱题（可优先针对性辅导）】\n" + weak
+    if style_profile:
+        prompt += "\n\n【候选人真实面试风格画像】\n" + style_profile
     return prompt
 
 
@@ -842,7 +891,7 @@ REPORT_PROMPT = (
     "严格只输出 JSON（不要 markdown、不要多余文字）：\n"
     "overall: 综合得分 0-100 整数\n"
     "dimensions: 对象，键为 专业深度/表达与结构/岗位匹配/思考深度，值 0-100 整数\n"
-    "per_q: 数组，每项 {question: 问题摘要, verdict: 好/中/差, feedback: 1-2 句具体反馈（须引用转写依据）}\n"
+    "per_q: 数组，每项 {question: 问题摘要, verdict: 好/中/差, feedback: 1-2 句具体反馈（须引用转写依据）, suggested: 该题参考回答（1-2句要点即可，可参考对话中已给出的建议回答）}\n"
     "strengths: 字符串数组 2-4 条亮点（须有转写依据）\n"
     "improvements: 字符串数组 2-4 条待改进（须有转写依据）\n"
     "practice: 字符串数组 1-3 条接下来的练习建议\n"
@@ -925,7 +974,8 @@ def interview_start(body: dict):
     title = (job["company"] or "?") + " · " + (job["title"] or "?")
     jing_qs = _interview_q_context(job["company"], bool(learn))
     style_profile = _interview_style_profile() if learn else ""
-    prompt = _iv_system(job, resume_text, persona, itype, round_name, jing_qs, style_profile)
+    weak = _company_weak_points(job["company"]) if learn else ""
+    prompt = _iv_system(job, resume_text, persona, itype, round_name, jing_qs, style_profile, weak)
     d = _llm_json(prompt, "面试开始，请按规则输出首轮（自我介绍开场 + 第一个问题）。", override=_eval_cfg(), kind="面试")
     try:
         score = int(d.get("score")) if d.get("score") is not None else None
@@ -936,6 +986,8 @@ def interview_start(body: dict):
         "reply": str(d.get("reply", "") or "").strip(),
         "score": score,
         "feedback": str(d.get("feedback", "") or "").strip(),
+        "suggested": str(d.get("suggested", "") or "").strip(),
+        "hint": str(d.get("hint", "") or "").strip(),
         "question": str(d.get("question", "") or "").strip() or "请先用 1 分钟做个自我介绍。",
         "kind": "new",
     }
@@ -955,6 +1007,7 @@ def interview_start(body: dict):
 @app.post("/api/interview/{iid}/answer")
 def interview_answer(iid: int, body: dict):
     content = (body.get("content") or "").strip()
+    is_retry = bool(body.get("retry"))
     if not content:
         raise HTTPException(400, "回答不能为空")
     c = _conn()
@@ -967,20 +1020,27 @@ def interview_answer(iid: int, body: dict):
     if row["status"] != "ing":
         raise HTTPException(400, "面试已结束，不能继续作答")
     msgs = json.loads(row["messages"] or "[]")
-    msgs.append({"role": "user", "content": content[:4000]})
+    user_content = ("【补充回答】" if is_retry else "") + content[:4000]
+    msgs.append({"role": "user", "content": user_content})
     job = _get_job(row["job_id"])
     jing_qs = _interview_q_context(job["company"], bool(row["learn"]))
     style_profile = _interview_style_profile() if row["learn"] else ""
-    prompt = _iv_system(job, row["resume_text"], row["persona"], row["itype"], row["round_name"], jing_qs, style_profile)
+    weak = _company_weak_points(job["company"]) if row["learn"] else ""
+    prompt = _iv_system(job, row["resume_text"], row["persona"], row["itype"], row["round_name"], jing_qs, style_profile, weak)
     history = []
     for m in msgs[:-1]:
         if m.get("role") == "user":
             history.append({"role": "user", "content": m.get("content", "")})
         else:
-            history.append({"role": "assistant", "content": ((m.get("reply", "") or "") + "\n" + (m.get("question", "") or "")).strip()})
-    d = _llm_json(prompt, "候选人最新回答：\n" + content + "\n\n请输出 JSON（reply + score + feedback + question + kind）。", history, override=_eval_cfg(), kind="面试")
+            hist = ((m.get("reply", "") or "") + "\n" + (m.get("question", "") or "")).strip()
+            if m.get("hint"):
+                hist += "\n[改进提示] " + m["hint"]
+            if m.get("suggested"):
+                hist += "\n[参考回答] " + m["suggested"]
+            history.append({"role": "assistant", "content": hist})
+    d = _llm_json(prompt, "候选人最新回答：\n" + user_content + "\n\n请输出 JSON（reply + score + feedback + suggested + hint + question + kind）。", history, override=_eval_cfg(), kind="面试")
     kind = str(d.get("kind", "") or "").strip()
-    if kind not in ("followup", "new", "end"):
+    if kind not in ("followup", "new", "retry", "end"):
         kind = "new"
     try:
         score = int(d.get("score")) if d.get("score") is not None else None
@@ -988,12 +1048,22 @@ def interview_answer(iid: int, body: dict):
             score = max(0, min(100, score))
     except Exception:
         score = None
+    if kind == "retry":
+        last_q = ""
+        for m in reversed(msgs):
+            if m.get("role") == "assistant" and m.get("question"):
+                last_q = str(m["question"]).strip()
+                break
+    else:
+        last_q = str(d.get("question", "") or "").strip()
     new = {
         "role": "assistant",
         "reply": str(d.get("reply", "") or "").strip(),
         "score": score,
         "feedback": str(d.get("feedback", "") or "").strip(),
-        "question": str(d.get("question", "") or "").strip() or "请继续说说你的项目。",
+        "suggested": str(d.get("suggested", "") or "").strip(),
+        "hint": str(d.get("hint", "") or "").strip(),
+        "question": last_q or "请继续说说你的项目。",
         "kind": kind,
     }
     msgs.append(new)
@@ -1003,6 +1073,8 @@ def interview_answer(iid: int, body: dict):
             c.execute("UPDATE interviews SET messages=? WHERE id=?", (json.dumps(msgs, ensure_ascii=False), iid))
     finally:
         c.close()
+    if row["learn"] and (new["hint"] or (score is not None and score < 60)):
+        _save_iv_weak(job["company"], new["question"], new["hint"], new["suggested"], score)
     return {"message": new}
 
 
@@ -1029,8 +1101,10 @@ def interview_finish(iid: int):
             line = ((m.get("reply", "") or "") + " " + (m.get("question", "") or "")).strip()
             if m.get("score") is not None:
                 line += "（本题评分：%s；反馈：%s）" % (m["score"], m.get("feedback", "") or "")
+            if m.get("suggested"):
+                line += "\n  [参考回答] " + str(m["suggested"])[:300]
             lines.append("面试官：" + line)
-    transcript = "\n".join(lines)[:8000]
+    transcript = "\n".join(lines)[:12000]
     user = (_job_ctx(job) + "\n\n【候选人简历】\n" + (row["resume_text"] or "（未提供简历）") +
             "\n\n【面试对话转写】\n" + transcript)
     d = _llm_json(REPORT_PROMPT, user, override=_eval_cfg(), kind="面试报告")
@@ -1046,6 +1120,7 @@ def interview_finish(iid: int):
                 "question": str(q.get("question", "")).strip(),
                 "verdict": verdict if verdict in ("好", "中", "差") else "中",
                 "feedback": str(q.get("feedback", "")).strip(),
+                "suggested": str(q.get("suggested", "") or "").strip(),
             })
     report = {
         "overall": overall,
@@ -1067,6 +1142,101 @@ def interview_finish(iid: int):
     if row["learn"]:
         _save_mock_jing(job, msgs)
     return {"report": report}
+
+
+@app.post("/api/interview/practice/start")
+def practice_start(body: dict):
+    jid = body.get("job_id")
+    if isinstance(jid, str):
+        jid = int(jid) if jid.isdigit() else None
+    job = _get_job(jid) if jid else None
+    if not job:
+        raise HTTPException(404, "岗位不存在")
+    persona = str(body.get("persona") or "senior").strip()
+    if persona not in PERSONAS:
+        persona = "senior"
+    c = _conn()
+    try:
+        row = c.execute("SELECT * FROM practice WHERE job_id=? AND persona=?", (jid, persona)).fetchone()
+        if row:
+            return {"id": row["id"], "job_id": row["job_id"], "persona": row["persona"],
+                    "messages": json.loads(row["messages"] or "[]"), "created_at": row["created_at"]}
+        with c:
+            cur = c.execute(
+                "INSERT INTO practice (job_id,persona,messages,created_at,updated_at) VALUES (?,?,?,?,?)",
+                (jid, persona, "[]", time.strftime("%Y-%m-%d %H:%M"), time.strftime("%Y-%m-%d %H:%M")),
+            )
+        return {"id": cur.lastrowid, "job_id": jid, "persona": persona, "messages": [],
+                "created_at": time.strftime("%Y-%m-%d %H:%M")}
+    finally:
+        c.close()
+
+
+@app.delete("/api/interview/practice/{pid}")
+def practice_delete(pid: int):
+    c = _conn()
+    try:
+        with c:
+            cur = c.execute("DELETE FROM practice WHERE id=?", (pid,))
+        if cur.rowcount == 0:
+            raise HTTPException(404, "陪练会话不存在")
+        return {"ok": True}
+    finally:
+        c.close()
+
+
+@app.post("/api/interview/practice/{pid}/stream")
+def practice_stream(pid: int, body: dict):
+    message = (body.get("message") or "").strip()
+    if not message:
+        raise HTTPException(400, "消息不能为空")
+    c = _conn()
+    try:
+        row = c.execute("SELECT * FROM practice WHERE id=?", (pid,)).fetchone()
+    finally:
+        c.close()
+    if not row:
+        raise HTTPException(404, "陪练会话不存在")
+    job = _get_job(row["job_id"])
+    if not job:
+        raise HTTPException(404, "岗位不存在")
+    persona = row["persona"] or "senior"
+    msgs = json.loads(row["messages"] or "[]")
+    resume = _active_resume()
+    resume_text = (resume["content"] if resume else "") or ""
+    jing_qs = _interview_q_context(job["company"], True)
+    style_profile = _interview_style_profile()
+    weak = _company_weak_points(job["company"])
+    prompt = _practice_system(job, resume_text, persona, jing_qs, style_profile, weak)
+    history = []
+    for m in msgs[-12:]:
+        role = m.get("role")
+        if role in ("user", "assistant"):
+            history.append({"role": role, "content": m.get("content", "")})
+
+    def gen():
+        full = ""
+        try:
+            for chunk in _llm_stream(prompt, message, history, override=_eval_cfg(), kind="面试陪练"):
+                full += chunk
+                yield chunk
+        except HTTPException as e:
+            yield "\n\n⚠️ " + str(e.detail)
+        msgs.append({"role": "user", "content": message[:4000]})
+        if full.strip():
+            msgs.append({"role": "assistant", "content": full.strip()})
+        try:
+            c2 = _conn()
+            try:
+                with c2:
+                    c2.execute("UPDATE practice SET messages=?, updated_at=? WHERE id=?",
+                               (json.dumps(msgs[-40:], ensure_ascii=False), time.strftime("%Y-%m-%d %H:%M"), pid))
+            finally:
+                c2.close()
+        except Exception:
+            pass
+
+    return StreamingResponse(_sse(gen()), media_type="text/event-stream")
 
 
 def _norm(s):
@@ -3320,6 +3490,55 @@ def _my_interview_jings():
     finally:
         c.close()
     out = []
+    for r in rows:
+        try:
+            qs = json.loads(r["questions"] or "[]")
+        except Exception:
+            qs = []
+        out.append({"company": r["company"], "title": r["title"],
+                    "questions": [str(q) for q in qs], "summary": r["summary"] or ""})
+    return out
+
+
+def _company_weak_points(company, limit=5):
+    """该公司历史模拟面试中的薄弱题（低分或需改进引导的题），用于优先复习。"""
+    if not (company or "").strip():
+        return ""
+    c = _conn()
+    try:
+        rows = c.execute(
+            "SELECT question,hint,suggested,score FROM iv_weak WHERE company=? ORDER BY id DESC LIMIT ?",
+            (company, limit),
+        ).fetchall()
+    finally:
+        c.close()
+    if not rows:
+        return ""
+    out = []
+    for r in rows:
+        line = "Q: %s" % (str(r["question"] or "").strip())
+        if r["score"] is not None and r["score"] != 0:
+            line += "（上次得分 %s）" % r["score"]
+        if r["hint"]:
+            line += "\n  改进点：%s" % str(r["hint"]).strip()[:200]
+        out.append(line)
+    return "\n".join(out)
+
+
+def _save_iv_weak(company, question, hint, suggested, score):
+    q = str(question or "").strip()
+    if not q or "点击结束" in q or "结束生成报告" in q:
+        return
+    c = _conn()
+    try:
+        with c:
+            c.execute(
+                "INSERT INTO iv_weak (company,question,hint,suggested,score,created_at) VALUES (?,?,?,?,?,?)",
+                (company or "", q[:200], str(hint or "")[:400], str(suggested or "")[:800],
+                 score if score is not None else 0, time.strftime("%Y-%m-%d %H:%M")),
+            )
+    finally:
+        c.close()
     for r in rows:
         try:
             qs = json.loads(r["questions"] or "[]")

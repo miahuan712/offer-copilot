@@ -111,6 +111,10 @@ select.stage{border:none;border-radius:9px;padding:3px 6px;font-size:12px;font-w
 .rlink{color:var(--blue);cursor:pointer;font-size:12px;flex:none}
 .rdel{color:#e5484d;cursor:pointer;font-size:12px;flex:none}
 .iv-setup{flex:1;overflow-y:auto;padding:24px;max-width:760px;margin:0 auto;width:100%}
+.iv-modebar{display:flex;gap:8px;padding:14px 20px 0;max-width:760px;margin:0 auto;width:100%}
+.iv-modebar button{padding:9px 0;font-size:14px}
+.pr-chip{padding:5px 12px;font-size:12px;border-radius:20px}
+#prMsgs .msg{max-width:min(760px,100%);margin:0 auto;width:100%}
 .iv-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
 .iv-card h3{margin:0 0 6px}
 .iv-card p{margin:0 0 14px;color:var(--sub);font-size:13px}
@@ -320,6 +324,10 @@ select.inp{height:36px}
 </div>
 
 <section id="view-interview" class="view" hidden>
+  <div class="iv-modebar">
+    <button id="ivModeMock" class="primary" style="flex:1">🎤 模拟面试</button>
+    <button id="ivModePractice" class="ghost" style="flex:1">💬 日常陪练</button>
+  </div>
   <div class="iv-setup" id="ivSetup">
     <div class="iv-card">
       <h3>🎤 模拟面试</h3>
@@ -408,6 +416,32 @@ select.inp{height:36px}
       <button class="primary" id="ivSend">发送</button>
     </div>
   </div>
+  <div id="ivPractice" hidden style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
+    <div class="iv-card" style="flex:none;margin-bottom:0">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <select id="prJob" class="inp" style="flex:1;min-width:180px"></select>
+        <select id="prPersona" class="inp" style="flex:1;min-width:150px">
+          <option value="senior">陈工 · 资深面试官（严谨）</option>
+          <option value="peer">小林 · 一线工程师（随和）</option>
+          <option value="hr">王HR · 动机/匹配</option>
+          <option value="manager">刘总 · 经理（全局观）</option>
+        </select>
+        <button class="ghost" id="prNew" style="padding:8px 14px">🔄 新会话</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="ghost pr-chip" data-prq="自我介绍怎么讲更出彩？结合我的简历给出话术">自我介绍</button>
+        <button class="ghost pr-chip" data-prq="项目深挖题怎么答？面试官一直追问细节">项目深挖</button>
+        <button class="ghost pr-chip" data-prq="HR 问为什么选择我们公司，结合简历怎么答">动机题</button>
+        <button class="ghost pr-chip" data-prq="「你最大的缺点是什么」怎么回答更好？">缺点题</button>
+      </div>
+      <p style="margin:10px 0 0;font-size:12px;color:var(--sub)">日常陪练 · 纯文字 · 随时请教面试官某道题怎么答更好（自动结合岗位 JD、你的简历、该公司面经与历史薄弱题）。</p>
+    </div>
+    <div id="prMsgs" style="flex:1;min-height:0;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px"></div>
+    <div class="composer" style="flex:none">
+      <textarea id="prInput" placeholder="请教面试官：比如「自我介绍怎么讲更出彩？」…（Enter 发送）"></textarea>
+      <button class="primary" id="prSend">发送</button>
+    </div>
+  </div>
 </section>
 
 <div class="modal" id="ivEndModal" hidden>
@@ -452,6 +486,7 @@ select.inp{height:36px}
       <h4>⚠ 待改进</h4><ul class="mlist gap" id="rpImprove"></ul>
       <h4>› 接下来练什么</h4><ul class="mlist tip" id="rpPractice"></ul>
       <h4>逐题反馈</h4><div id="rpPerQ"></div>
+      <h4>📖 参考回答（对照学习）</h4><div id="rpSuggested"></div>
     </div>
   </div>
 </div>
@@ -1025,7 +1060,7 @@ function switchView(v){
   $("view-settings").hidden = v !== "settings";
   if(v === "chat") loadChatModels();
   if(v === "table"){ loadJobs(); loadExps(); }
-  if(v === "iv") loadIv();
+  if(v === "iv"){ setIvMode(ivMode); loadIv(); }
   if(v === "jings") loadJings();
   if(v === "daily") loadDaily();
   if(v === "monitor") loadMonitor();
@@ -1359,6 +1394,7 @@ $("rCancel").addEventListener("click", () => {
 });
 
 let ivCur = null;
+let ivRetry = false;
 
 function barHTML(k, v){
   v = Math.max(0, Math.min(100, parseInt(v) || 0));
@@ -1386,30 +1422,74 @@ async function loadIv(){
   loadReviews();
 }
 
+let ivSessionActive = false;
 function showIvSession(on){
+  ivSessionActive = on;
   $("ivSetup").hidden = on;
   $("ivSession").hidden = !on;
+  $("ivPractice").hidden = true;
+  if(!on) setIvMode(ivMode);
 }
+
+let ivMode = "mock";
+function setIvMode(mode){
+  ivMode = mode;
+  const mock = mode === "mock";
+  $("ivModeMock").className = mock ? "primary" : "ghost";
+  $("ivModePractice").className = mock ? "ghost" : "primary";
+  $("ivPractice").hidden = mock;
+  if(mock){
+    $("ivSetup").hidden = ivSessionActive;
+    $("ivSession").hidden = !ivSessionActive;
+  }else{
+    $("ivSetup").hidden = true;
+    $("ivSession").hidden = true;
+    loadPractice();
+  }
+}
+$("ivModeMock").addEventListener("click", () => setIvMode("mock"));
+$("ivModePractice").addEventListener("click", () => setIvMode("practice"));
 
 function ivBubble(m){
   if(m.role === "user"){
-    return '<div class="msg user"><div class="bubble">' + esc(m.content || "") + '</div></div>';
+    return '<div class="msg user"><div class="bubble">' + esc((m.content || "").replace(/^【补充回答】/, "")) + '</div></div>';
   }
   const name = (ivCur && ivCur.personaName) ? ivCur.personaName : "面试官";
   const rep = m.reply || "";
   const q = m.question || "";
   const sc = m.score;
   const fb = m.feedback || "";
+  const hint = m.hint || "";
+  const sug = m.suggested || "";
   let scoreHtml = "";
   if(sc != null){
     const c = sc >= 70 ? ["#e8f7ee","#2ea64f"] : sc >= 50 ? ["#fdf0e0","#d97a00"] : ["#fdecec","#e5484d"];
     scoreHtml = '<span style="display:inline-block;background:' + c[0] + ';color:' + c[1] + ';border-radius:8px;padding:1px 9px;font-size:12px;font-weight:700;margin:4px 0">本题 ' + sc + ' 分</span> ' + (fb ? '<span style="font-size:12px;color:#8f959e">' + esc(fb) + '</span>' : '') + '<br><br>';
   }
+  let hintHtml = "";
+  if(hint){
+    hintHtml = '<div style="background:#fff8ec;border:1px solid #f3d9a4;border-radius:10px;padding:8px 10px;margin:0 0 8px;font-size:13px">' +
+      '<div style="font-weight:600;color:#b45f06;margin-bottom:4px">💡 改进引导</div>' + esc(hint) + '</div>';
+  }
+  let sugHtml = "";
+  if(sug){
+    sugHtml = '<details style="margin:0 0 8px" ' + ((sc != null && sc < 60) || m.kind === "retry" ? "open" : "") + '>' +
+      '<summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--blue)">📖 参考回答（点击展开）</summary>' +
+      '<div style="background:#f4f8ff;border:1px solid #d6e4ff;border-radius:10px;padding:8px 10px;margin-top:6px;font-size:13px;color:#234663;white-space:pre-wrap">' + esc(sug) + '</div></details>';
+  }
+  let retryHtml = "";
+  if(m.kind === "retry"){
+    retryHtml = '<button class="primary" data-ivretry style="padding:5px 14px;font-size:13px;margin-top:2px">✍️ 按提示再答一次</button>';
+  }
   return '<div class="msg bot"><div class="bubble">' +
     '<div style="font-size:12px;color:var(--blue);font-weight:600;margin-bottom:4px">👤 ' + name + '</div>' +
     (rep ? '<span style="color:#8f959e;font-size:13px">' + esc(rep) + '</span><br><br>' : '') +
     scoreHtml +
-    '<b>' + esc(q) + '</b></div></div>';
+    hintHtml +
+    sugHtml +
+    '<b>' + esc(q) + '</b>' +
+    retryHtml +
+    '</div></div>';
 }
 
 function renderIvSession(){
@@ -1456,7 +1536,9 @@ async function ivSendMsg(){
   $("ivSend").disabled = true;
   $("ivInput").disabled = true;
   try{
-    const r = await api("/api/interview/" + ivCur.id + "/answer", {method:"POST", body: JSON.stringify({content:text})});
+    const r = await api("/api/interview/" + ivCur.id + "/answer", {method:"POST", body: JSON.stringify({content:text, retry: ivRetry})});
+    ivRetry = false;
+    $("ivInput").placeholder = "输入你的回答…（🎤 可开启连续语音，边录边转，再点一次停止）";
     ivCur.msgs.push(r.message);
     $("ivMsgs").insertAdjacentHTML("beforeend", ivBubble(r.message));
     $("ivMsgs").scrollTop = $("ivMsgs").scrollHeight;
@@ -1465,6 +1547,112 @@ async function ivSendMsg(){
   $("ivInput").disabled = false;
   $("ivInput").focus();
 }
+
+$("ivMsgs").addEventListener("click", e => {
+  const btn = e.target.closest("[data-ivretry]");
+  if(!btn || !ivCur || ivCur.readonly) return;
+  ivRetry = true;
+  const inp = $("ivInput");
+  inp.placeholder = "✍️ 按提示补充回答…（这是对上一题的重答）";
+  inp.disabled = false;
+  inp.focus();
+  btn.textContent = "已开启重答，请在下方补充回答";
+  btn.disabled = true;
+});
+
+// ===================== 日常陪练 =====================
+let prSess = null;
+
+function prBubble(role, text){
+  const d = document.createElement("div");
+  d.className = "msg " + (role === "user" ? "user" : "bot");
+  const b = document.createElement("div");
+  b.className = "bubble";
+  b.style.whiteSpace = "pre-wrap";
+  b.textContent = text;
+  d.appendChild(b);
+  return d;
+}
+
+function renderPractice(){
+  const box = $("prMsgs");
+  box.innerHTML = "";
+  (prSess && prSess.msgs || []).forEach(m => box.appendChild(prBubble(m.role, m.content || "")));
+  box.scrollTop = box.scrollHeight;
+}
+
+async function loadPractice(){
+  try{
+    const list = await api("/api/jobs");
+    $("prJob").innerHTML = list.map(j => '<option value="' + j.id + '">' + esc((j.company || "?") + " · " + (j.title || "?")) + '</option>').join("") || '<option value="">（先去「📋 表格」添加岗位）</option>';
+  }catch(e){}
+  if(!prSess) await prStart();
+}
+
+async function prStart(){
+  const jid = $("prJob").value;
+  if(!jid){ return; }
+  const persona = $("prPersona").value;
+  try{
+    const r = await api("/api/interview/practice/start", {method:"POST", body: JSON.stringify({job_id: +jid, persona})});
+    prSess = {id: r.id, job_id: r.job_id, persona: r.persona, msgs: r.messages || []};
+    renderPractice();
+    $("prInput").disabled = false;
+    $("prSend").disabled = false;
+  }catch(e){ alert(e.message); }
+}
+
+async function prSendMsg(){
+  if(!prSess || !prSess.id) return;
+  const ta = $("prInput");
+  const text = ta.value.trim();
+  if(!text) return;
+  ta.value = "";
+  prSess.msgs.push({role:"user", content:text});
+  const box = $("prMsgs");
+  box.appendChild(prBubble("user", text));
+  const bot = prBubble("bot", "");
+  box.appendChild(bot);
+  box.scrollTop = box.scrollHeight;
+  $("prSend").disabled = true;
+  $("prInput").disabled = true;
+  let full = "";
+  try{
+    await sseStream("/api/interview/practice/" + prSess.id + "/stream", {message:text}, (t) => {
+      full += t;
+      bot.querySelector(".bubble").textContent = full;
+      box.scrollTop = box.scrollHeight;
+    });
+  }catch(e){
+    full += "\n⚠️ " + e.message;
+    bot.querySelector(".bubble").textContent = full;
+  }
+  if(full.trim()) prSess.msgs.push({role:"assistant", content:full.trim()});
+  $("prSend").disabled = false;
+  $("prInput").disabled = false;
+  $("prInput").focus();
+}
+
+$("prJob").addEventListener("change", prStart);
+$("prPersona").addEventListener("change", prStart);
+$("prSend").addEventListener("click", prSendMsg);
+$("prInput").addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); prSendMsg(); }
+});
+$("prNew").addEventListener("click", async () => {
+  if(!prSess || !prSess.id) return;
+  if(!confirm("确定清空当前陪练会话吗？")) return;
+  try{ await api("/api/interview/practice/" + prSess.id, {method:"DELETE"}); }catch(e){}
+  prSess = null;
+  $("prMsgs").innerHTML = "";
+  await prStart();
+});
+$("prMsgs").addEventListener("click", e => {
+  const chip = e.target.closest("[data-prq]");
+  if(!chip || !prSess || !prSess.id) return;
+  $("prInput").value = chip.dataset.prq;
+  prSendMsg();
+});
 
 $("ivSend").addEventListener("click", ivSendMsg);
 $("ivInput").addEventListener("keydown", e => {
@@ -1576,6 +1764,9 @@ function openReport(rp, title){
   $("rpPerQ").innerHTML = (rp.per_q || []).map(q =>
     '<div class="qitem"><div><span class="verdict ' + (vmap[q.verdict] || "v-mid") + '">' + esc(q.verdict || "中") + '</span><span class="qtext">' + esc(q.question || "") + '</span></div><div class="qfb">' + esc(q.feedback || "") + '</div></div>'
   ).join("") || '<div style="color:#8f959e;font-size:13px">无逐题记录</div>';
+  $("rpSuggested").innerHTML = (rp.per_q || []).map(q =>
+    q.suggested ? '<div class="qitem"><div><span class="qtext">' + esc(q.question || "") + '</span></div><div class="qfb" style="color:#234663">' + esc(q.suggested) + '</div></div>' : ''
+  ).join("") || '<div style="color:#8f959e;font-size:13px">无参考回答</div>';
   $("reportModal").hidden = false;
 }
 

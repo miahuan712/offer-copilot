@@ -38,7 +38,11 @@ if errorlevel 1 (
 
 echo.
 echo Starting server, opening http://127.0.0.1:8500 ...
+
+REM ---- free port 8500 if occupied by an old instance (fallback) ----
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8500 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }"
 start "" /min cmd /c "timeout /t 6 >nul & start http://127.0.0.1:8500"
+
 set PYTHONUNBUFFERED=1
 %PY% -m uvicorn app:app --host 127.0.0.1 --port 8500
 
